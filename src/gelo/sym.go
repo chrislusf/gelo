@@ -5,28 +5,28 @@ import "bytes"
 var Null = interns("")
 
 func StrToSym(s string) Symbol {
-    return _dSymbol([]byte(s))
+	return _dSymbol([]byte(s))
 }
 
 func BytesToSym(s []byte) Symbol {
-    return _dSymbol(s)
+	return _dSymbol(s)
 }
 
 func RuneToSym(s []int) Symbol {
-    return _dSymbol([]byte(string(s)))
+	return _dSymbol([]byte(string(s)))
 }
 
 func StrEqualsSym(a string, b Symbol) bool {
-    return bytes.Equal([]byte(a), b.Bytes())
+	return bytes.Equal([]byte(a), b.Bytes())
 }
 
 //returns true if w is the Symbol ""
 func IsNullString(w Word) bool {
-    s, ok := w.(Symbol)
-    if !ok {
-        return false
-    }
-    return len(s.Ser().Bytes()) == 0
+	s, ok := w.(Symbol)
+	if !ok {
+		return false
+	}
+	return len(s.Ser().Bytes()) == 0
 }
 
 func intern(s []byte) Symbol { return _iSymbol(s) }
@@ -52,7 +52,7 @@ func (s _dSymbol) Copy() Word { return _dSymbol(dup([]byte(s))) }
 func (s _dSymbol) DeepCopy() Word { return s.Copy() }
 
 func (s _dSymbol) Equals(w Word) bool {
-    return bytes.Equal([]byte(s), w.Ser().Bytes())
+	return bytes.Equal([]byte(s), w.Ser().Bytes())
 }
 
 func (_ _dSymbol) interned() bool { return false }
@@ -76,7 +76,7 @@ func (s _iSymbol) Copy() Word { return _dSymbol(dup([]byte(s))) } //not a typo
 func (s _iSymbol) DeepCopy() Word { return s.Copy() }
 
 func (s _iSymbol) Equals(w Word) bool {
-    return bytes.Equal([]byte(s), w.Ser().Bytes())
+	return bytes.Equal([]byte(s), w.Ser().Bytes())
 }
 
 func (_ _iSymbol) interned() bool { return true }
