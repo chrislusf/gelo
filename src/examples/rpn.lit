@@ -1,0 +1,167 @@
+    A simple RPN calculator with far too many comments.
+    The proliferation of comments are here to explain some features of the gel
+    language and standard library.
+    See rpn-compact.gel for a copy without any comments.
+
+  First we define the central data structure, the stack,
+and the operations that we need on it.
+
+        Set or reset stack to the empty list, generated
+    by calling the list constructor with no arguments.
+        Note that we instantiate stack no where else in the program listing
+    so we must be sure to invoke it at least once before any of the other
+    operations are called on it.
+        Rather than using command (gel's equivalent of a function definition,)
+    we simply assign a quote (unevaluated code or data) to a name. The quote
+    is evaluated in the namespace it is called in, so when we set! stack we
+    are changing the global namespace.
+
+> set! reset-stack! {
+>   set! stack [List]
+> }
+
+        We build the stack backwards because it's simpler to cons top
+    on to the stack instead of appending it to the end, as we shall see
+    in pop.
+
+> set! push {
+>   lcons! stack [head $arguments]
+> }
+
+    Pop the top element off the stack. If we had used append instead of cons,
+    the body would have looked like this:
+        set! tmp [lindex $stack -1]
+        lslice! stack 0 to [- 1 [llength $stack]]
+        unset! tmp
+    Not terribly complicated, but more verbose.
+
+> set! pop {
+>   error-if-empty
+>   set! tmp [head $stack]
+>   set! stack [tail $stack]
+>   unset! tmp ;# unset returns the result of its v
+> }
+
+Now we define some helper functions
+
+return the size of the stack:
+
+> set! stack-size {
+>   llength $stack
+> }
+
+If the stack is empty, error out
+
+> set! error-if-empty {
+>   if [= 0 [stack-size]] then {
+>       RuntimeError Stack Underflow
+>   }
+> }
+
+        bop (binary operator) takes a command that takes at least two numbers
+    as arguments, to abstract away what would otherwise have to repeated
+    for each operator.
+
+> set! bop {
+>   push [[head $arguments] [pop] [pop]]
+> }
+
+    uop (unary operator) is bop with less arity
+
+> set! uop {
+>   push [[head $arguments] [pop]]
+> }
+
+    Used if the user enters an erroneous calculation to show them the error.
+    This is also useful for debugging, if you want to add extra features.
+
+> set! inspect {
+>   puts @[lreverse $stack]
+> }
+
+        Take a string split on spaces, remove any elements in the resultant
+    list that are entirely whitespace.
+
+    tokenize uses some tacit-programming magic so we'll explain it in detail
+    the command is rewritten as follows:
+
+     some [split [head $arguments] on " "] by [o not empty?]
+    * head $arguments is replaced by the argument, hereafter ARG. It must be
+       a symbol.
+
+     some [split ARG on " "] by [o not empty?]
+    * split ARG on " " returns a list of the whitespace and nonwhitespace
+       contained in ARG, hereafter LIST.
+
+     some LIST by [o not empty?]
+     * o creates the function composition of not and empty, hereafter NOTEMPTY.
+       It is equivalent to { not [empty? [head $arguments]] }.
+
+     some LIST by NOTEMPTY
+     * some iterates over the elements of LIST and builds a new list of only
+       those elements for which NOTEMPTY returns true
+
+> set! tokenize {
+>   some [split [head $arguments] on " "] by [o not empty?]
+> }
+
+
+This is the main loop of the program.
+
+> set! loop {
+>   # every iterates over a list and creates a new list by applying a transform
+>   # to each element. This is both the map and for-each of the language.
+>   # every is the same as the some command syntactically, however below
+>   # we use the optional "item NAME in" syntax which lets you alias the items
+>   # in the list processed
+>   every item token in [tokenize [gets]] do {
+>       #case-of checks its argument against a serious of patterns using =.
+>       #if the pattern is a space separated list each item in the list is
+>       #checked in turn. If no patterns match it follows the otherwise clause
+>       #(which must be the last clause)
+>       case-of $token {
+>           quit => halt
+>           neg => { uop $token }
+>           + - * => { bop $token }
+>           / => { bop div }
+>           otherwise {
+>               #Not an operator or command. Attempt to convert to number
+>               set! n [Number $token]
+>               #Number returns false if it cannot convert
+>               if [/ number? $n] then {
+>                   die [puts $token is neither a number nor an operator]
+>               }
+>               push $n
+>           }
+>       }
+>   }
+>   case-of [stack-size] {
+>       0 => {
+>           # do nothing, because the user did nothing except hit enter
+>           # we simply fall through and let the loop continue
+>       }
+>       1 => {
+>           #show the user the result of their calculation
+>           puts ==> [pop]
+>           puts Enter another compuation or quit to quit
+>       }
+>       otherwise {
+>           puts Stack should only contain result. Instead we have:
+>           inspect
+>           puts Try again or enter quit to quit.
+>           #the stack is in an inconsitient state so we reset it
+>           reset-stack!
+>       }
+>   }
+>   loop ;# we continue until quit is entered as input
+> }
+
+> puts Enter a computation in RPN (Reverse Polish Notation) or quit to quit
+
+this creates the stack we use in loop
+> reset-stack!
+
+Finally, we start the main loop
+
+> loop
+

@@ -1,0 +1,54 @@
+set! reset-stack! { set! stack [List] }
+set! push { lcons! stack [head $arguments] }
+set! pop {
+    error-if-empty
+    set! tmp [head $stack]
+    set! stack [tail $stack]
+    unset! tmp ;# unset returns the result of its v
+}
+set! stack-size { llength $stack }
+set! error-if-empty {
+    if [= 0 [stack-size]] then {
+        die [puts Stack Underflow]
+    }
+}
+set! bop { push [[head $arguments] [pop] [pop]] }
+set! uop { push [[head $arguments] [pop]] }
+set! inspect { puts @[lreverse $stack] }
+set! tokenize { some [split [head $arguments] on " "] by [o not empty?] }
+set! loop {
+    every item token in [tokenize [gets]] do {
+        case-of $token {
+            quit  =>  halt
+            neg   =>  { uop $token }
+            + - * =>  { bop $token }
+            /     =>  { bop div }
+            otherwise {
+                set! n [Number $token]
+                if [/ number? $n] then {
+                    die [puts $token is neither a number nor an operator]
+                }
+                push $n
+            }
+        }
+    }
+    case-of [stack-size] {
+        0 => {}
+        1 => {
+            puts ==> [pop]
+            puts Enter another compuation or quit to quit
+        }
+        otherwise {
+            puts Stack should only contain result. Instead we have:
+            inspect
+            puts Try again or enter quit to quit.
+            reset-stack!
+        }
+    }
+    inspect
+    loop
+}
+
+puts Enter a computation in RPN (Reverse Polish Notation) or quit to quit
+reset-stack!
+loop

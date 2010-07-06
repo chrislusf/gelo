@@ -1,0 +1,6 @@
+# a simple read-eval-print-loop
+set! loop {
+    puts [eval [Quote [gets]]]
+    loop
+}
+loop

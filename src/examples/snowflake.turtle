@@ -1,0 +1,19 @@
+
+command koch {len dep} {
+    if [/0? $dep] then {
+        set! third [div $len 3]
+        decr! dep
+        koch $third $dep
+        every item theta in [List -60 120 -60] do {
+            rotate $theta
+            koch $third $dep
+        }
+    } else {
+        forward $len
+    }
+}
+
+repeat 3 {
+    koch 200 4
+    rotate 120
+}

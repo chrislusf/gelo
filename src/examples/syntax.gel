@@ -1,0 +1,31 @@
+
+#a comment--everything in this file should parse poifectly
+{};#a Noop followed by comment
+#{
+    multiline comment
+}
+{
+    puts a naked quote
+}
+puts $true a variable substitution
+set! empty [List]
+puts @empty a splice -- if arguments==nil there should be no space
+puts "a   strinnnng   !
+    with a ton of whitesp       ace"
+{
+    puts [puts clause doublespeak]
+}
+puts testing "$[]"
+{
+    puts $[puts true]
+}
+puts testing "@[]"
+set! a {
+    List a c d
+}
+puts a $a [a]
+
+{
+    puts @arguments
+    puts @[List @arguments]
+} a list of arguments

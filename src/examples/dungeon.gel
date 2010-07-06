@@ -1,0 +1,217 @@
+# data
+
+set! ROOMS [Dict]
+set! ITEMS [Dict]
+set! INVENTORY [Dict]
+set! CURRENT-ROOM "" ;#so there's something to update
+
+
+# helper commands
+
+command room-has {thing} {
+    dict $CURRENT-ROOM set? $thing
+}
+
+command room-has-item {thing} {
+    dict [dict $CURRENT-ROOM get items] set? $thing
+}
+
+command room-get {thing} {
+    dict $CURRENT-ROOM get $thing
+}
+
+command room-call {action} {
+    if [room-has $action] then {
+        call [room-get $action]
+    }
+}
+
+command get-room {room} {
+    dict $ROOMS get $room
+}
+
+command room-exits {
+    set! acc [List]
+    every item dirn in [List north south west east up down] do {
+        if [room-has $dirn] then { lappend! acc $dirn }
+    }
+    puts Exits: @acc
+}
+
+command room-inventory {kind} {
+    puts The room contains:
+    every item pair in [dict [room-get items] items] do {
+        puts [head $pair] => [dict [lindex $pair 1] get $kind]
+    }
+}
+
+command you-have {thing} {
+    dict $INVENTORY set? $thing
+}
+
+set! input { defer puts ""; strip [gets] }
+
+
+# actions
+
+command move {dirn} {
+    if [room-has $dirn] then {
+        room-call exit
+        set-room [room-get $dirn]
+        room-call enter
+        glance
+    } else {
+        puts Cannot go $dirn
+    }
+}
+
+command grab {
+    room-inventory glance
+    puts What do you want to grab? \n
+    if [room-has-item [set! item [input]]] then {
+        give $item
+    } else {
+        puts There is no item $item to grab.
+    }
+}
+
+command drop {
+    puts What do you want to drop? \n
+    if [you-have [set! item [input]]] then {
+        take $item
+    } else {
+        puts You do not have item $item to drop.
+    }
+}
+
+command use {
+    puts What do you want to use? \n
+    if [you-have [set! item [input]]] then {
+        call [dict [dict $INVENTORY get $item] get use]
+    } else {
+        puts You do not have $item to use.
+    }
+}
+
+command inventory {
+    puts You have in your posession the following:
+    every [dict $INVENTORY keys] do puts
+}
+
+command glance {
+    puts [room-get glance]
+    room-inventory glance
+    room-exits
+}
+
+command look {
+    puts [room-get look]
+    room-inventory look
+    room-exits
+}
+
+set! help {
+    puts Unknown command: dungeon responds to the following commands:\n \*
+        north south west east up down quit look glance inventory grab drop use
+}
+
+
+# main loop
+
+set! adventure {
+    glance
+    loop
+}
+
+set! loop {
+    puts What do you want to do? \n
+    case-of [input] as cmd {
+        north south west east up down => { move $cmd }
+        grab drop use inventory look glance => { $cmd }
+        quit => halt
+        otherwise help
+    }
+    loop
+}
+
+
+# declaration language
+
+command item {name commands} {
+    set! d [Dict]
+    every item pair in [partial-eval $commands] do {
+        dict $d set! @pair
+    }
+    dict $ITEMS set! $name $d
+}
+
+command room {name commands} {
+    set! d [Dict]
+    every item pair in [partial-eval $commands] do {
+        dict $d set! @pair
+    }
+    dict $d set! items [Dict]
+    dict $ROOMS set! $name $d
+}
+
+command place {item 'in room} {
+    dict [dict [get-room $room] get items] set! $item [dict $ITEMS get $item]
+}
+
+command set-room {room} {
+    update! CURRENT-ROOM [dict $ROOMS get $room]
+}
+
+command give {item} {
+    dict $INVENTORY set! $item [dict [room-get items] unset! $item]
+}
+
+command take {item} {
+    dict [room-get items] set! $item [dict $INVENTORY unset! $item]
+}
+
+
+# room/item declarations:
+
+#item name {
+#   use { commands }
+#   glance "short description"
+#   look {a longer description}
+#}
+
+#room name {
+#   dir0 name ;# valid directions are north south east west up down
+#   ...
+#   dirN name
+#   glance "short description"
+#   look {a longer description}
+#   enter {commands}
+#   exit {commands}
+#}
+
+room main {
+    glance "an empty room"
+    look "\*
+        You see a perfectly square, perfectly white room without blemish or \*
+        adornment."
+    north foyer
+}
+
+room foyer {
+    glance "some kind of foyer"
+    look "there's also a table"
+    south main
+}
+
+item globe {
+    glance "a globe"
+    look "a small globe that does not seem to be accurate"
+    use {
+        puts the globe does not appear to do anything useful
+    }
+}
+
+place globe in foyer
+
+set-room main
+#adventure

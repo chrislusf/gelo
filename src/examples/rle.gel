@@ -1,0 +1,24 @@
+
+command RL-encode {string} {
+    *set! encoding cur count -- [List] [chars $string 0] 0
+    every item char in [tail [str->list $string]] do {
+        if [/= $char $cur] then {
+            lappend! encoding [List [<-string $count] $cur]
+            *set! cur count -- $char 1
+        } else {
+            incr! count
+        }
+    }
+    id $encoding
+}
+
+command RL-decode {encoding} {
+    cset! acc List
+    every item pair in $encoding do {
+        *set! count char -- @pair
+        every [range $count] do {
+            lappend! acc $char
+        }
+    }
+    join $acc
+}

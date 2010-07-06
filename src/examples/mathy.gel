@@ -1,0 +1,86 @@
+
+set! factorial { * @[range 1 to [+ 1 [head $arguments]]] }
+
+set! faster-factorial {
+    ns fork
+    defer ns unfork
+    defer unset! fac-acc n
+    set! n [+ 1 [head $arguments]]
+    set! fac-acc {
+        set! acc [head $arguments]
+        if [/= $n 1] then {
+            decr! n
+            fac-acc [* $acc $n]
+        } else {
+            $acc
+        }
+    }
+    fac-acc 1
+}
+
+puts Factorial calculation
+puts the simple version of factorial is effiecent enought [factorial 100]
+puts the faster version of factorial is nicer, though [faster-factorial 100]
+
+set! fibonacci {
+    ns fork
+    defer ns unfork
+    set! n [head $arguments]
+    case-of $n {
+        0 => 0
+        1 => 1
+        otherwise {
+            + [fibonacci [- $n 1]] [fibonacci [- $n 2]]
+        }
+    }
+}
+
+set! **fib-memo** [Dict]
+dict $**fib-memo** set! 0 0
+dict $**fib-memo** set! 1 1
+set! memod-fib {
+    ns fork
+    defer ns unfork
+    set! n [head $arguments]
+    if [dict $**fib-memo** set? $n] then {
+        dict $**fib-memo** get $n
+    } else {
+        dict $**fib-memo** set! $n [+ [fibonacci [- $n 1]] [fibonacci [- $n 2]]]
+    }
+}
+
+set! fast-fib {
+    ns fork
+    defer ns unfork
+    set! n [head $arguments]
+    if [[o not or] @[[cleave positive? integer?] $n]] then {
+        ArgumentError fast-fib "positive integer" $arguments
+    } else {
+        case-of $n {
+            0 => 0
+            1 => 1
+            otherwise {
+                set! first 0
+                set! second 1
+                set! loop {
+                    decr! n
+                    if [= 0 $n] then $first else {
+                        set! acc [+ $first $second]
+                        set! first $second
+                        set! second $acc
+                        loop
+                    }
+                }
+                loop
+            }
+        }
+    }
+}
+puts Fibonacci calculation:
+#puts simple: any higher than 17 and we win the coveted "double panic"
+#puts @[every item x in [range 15] do fibonacci]
+#puts memoized: any higher than 16 and we win the coveted "double panic"
+#puts @[every item x in [range 16] do memod-fib]
+puts fast-fib
+puts @[every item x in [range 25] do fast-fib]
+

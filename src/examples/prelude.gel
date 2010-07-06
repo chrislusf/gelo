@@ -1,0 +1,232 @@
+
+#only necessary in cases like cmd [call [head $lst]]
+set! call {
+    @arguments
+}
+
+set! **LET-TOP-PARSER** [MaybeArgumentParser "__var__ '= __val__ 'in __block__"]
+set! **LET-BLOCK-PARSER** [ArgumentParser "__decls__ 'in __block__"]
+set! **LET-EXPRESION-PARSER** [ArgumentParser "__var__ '= __val__"]
+set! let {
+    #{let - simple command for easing scoping of names
+        Syntax:
+        let var = val in code-block
+        OR
+        let {
+            var1 = val1
+            var2 = val2
+            ...
+            varN = valN
+        } in code-block
+        
+        where the var* are symbols and the val* may be either values or quoted
+        code. In the multivariate case, the var* are assigned values from top to
+        bottom, and have access to any previous definitions.
+    }
+    ns fork
+    defer ns unfork
+    set! try [**LET-TOP-PARSER** @arguments]
+    set! args $arguments
+    #TODO need to replace arguments with args. regex?
+    if [head $try] then {
+        ns inject! [lindex $try 1]
+        set! $__var__ [value $__val__]
+    } else {
+        ns inject! [**LET-BLOCK-PARSER** @args]
+        every item decl in [partial-eval $__decls__] do {
+            ns inject! [**LET-EXPRESION-PARSER** @decl]
+            set! $__var__ [value $__val__]
+        }
+        unset! __decls__
+    }
+    unset! __var__ __val__ = in try args
+    __block__
+}
+
+set! command {
+    ns fork
+    defer ns unfork
+    case-of $arguments by arg-count {
+        2 => {
+                set! **the-command-parser** [ArgumentParser]
+            }
+        3 => {
+                set! **the-command-parser** \*
+                    [ArgumentParser [lindex $arguments 1]]
+            }
+        otherwise {
+            SyntaxError command expects: name args? body where name is a \*
+                symbol, the optional args is a literal parseable by \*
+                ArgumentParser, and body is an invokable quote. Got: @arguments
+        }
+    }
+    set! **the-command-body** [lindex $arguments -1]
+    export! [head $arguments] [ns capture {
+        ns fork
+        defer ns unfork
+        ns inject! [**the-command-parser** @arguments]
+        **the-command-body**
+    }]
+}
+
+set! **MULTITEST**  {
+    ns fork
+    defer ns unfork
+    set! **comparator** [head $arguments]
+    set! **predicates** [cleave @[tail $arguments]]
+    ns capture {
+        case-of $arguments by arg-count {
+            0 => $false
+            1 => {
+                $**comparator** @[**predicates** [head $arguments]]
+            }
+            otherwise {
+                every item arg in $arguments do {
+                    $**comparator** @[**predicates** $arg]
+                }
+            }
+        }
+    }
+}
+
+set! collection? [**MULTITEST** or list? dict?]
+set! literal? [**MULTITEST** or number? symbol? bool?]
+
+#Unless it's an alien, we cannot know whether it is invokable until, we actually
+#invoke it. If it's a symbol having invoked it is no gurantee that it will
+#stay bound to an invokable
+set! possibly-invokable? [**MULTITEST** or symbol? quote? alien?]
+set! error? [**MULTITEST** or syntax-error? runtime-error?]
+
+set! +number?  [**MULTITEST** and number? positive?]
+set! -number?  [**MULTITEST** and number? negative?]
+set! +integer? [**MULTITEST** and integer? positive?]
+set! -integer? [**MULTITEST** and integer? negative?]
+
+unset! **MULTITEST**
+
+set! 0? { = 0 @arguments }
+set! /0? { /= 0 @arguments }
+
+set! / { not [@arguments] }
+
+set! divmod [cleave div mod]
+
+set! lslice {
+    lindex [head $arguments] @[range @[tail $arguments]]
+}
+
+set! str-slice {
+    chars [head $arguments] @[range @[tail $arguments]]
+}
+
+set! lappend {
+    if [/= 2 [llength $arguments]] then {
+        ArgumentError lappend "name-of-list item" $arguments
+    }
+    List @[id $[head $arguments]] [lindex $arguments 1]
+}
+
+set! lextend {
+    if [/= 2 [llength $arguments]] then {
+        ArgumentError lextend "name-of-list item" $arguments
+    }
+    List @[id $[head $arguments]] @[2nd $arguments]
+}
+
+set! lcons {
+    if [/= 2 [llength $arguments]] then {
+        ArgumentError lcons "name-of-list item" $arguments
+    }
+    List [2nd $arguments] @[id $[head $arguments]]
+}
+
+set! lslice! {
+    update! [head $arguments] [lslice @arguments]
+}
+
+set! lappend! {
+    update! [head $arguments] [lappend @arguments]
+}
+
+set! lextend! {
+    update! [head $arguments] [lextend @arguments]
+}
+
+set! lcons! {
+    update! [head $arguments] [lcons @arguments]
+}
+
+set! lsort! {
+    update! [head $arguments] \*
+        [lindex $[head $arguments] @[lsort $[head $arguments]]]
+}
+
+set! lset! {
+    set! [head $arguments] [List @[tail $arguments]]
+}
+
+set! nth  { lindex [head $arguments] [2nd $arguments] }
+set! 2nd  { lindex [head $arguments]  1 }
+set! 3rd  { lindex [head $arguments]  2 }
+set! 4th  { lindex [head $arguments]  3 }
+set! 5th  { lindex [head $arguments]  4 }
+set! 6th  { lindex [head $arguments]  5 }
+set! 7th  { lindex [head $arguments]  6 }
+set! 8th  { lindex [head $arguments]  7 }
+set! 9th  { lindex [head $arguments]  8 }
+set! 10th { lindex [head $arguments]  9 }
+set! last { lindex [head $arguments] -1 }
+
+set! rune-length {
+    llength [<-runes [head $arguments]]
+}
+
+command assume {'that x 'is pred ['or 'say message+]?} {
+    if [/ call $pred $x] then {
+        if [set? message] then {
+            die @message
+        } else {
+            die $x does not satisfy: $pred
+        }
+    }
+}
+
+command lsplit {list 'on sep} {
+    #split list on first instance of sep
+    set! pivot [head [index-of $sep $list]]
+    set! li {
+        lindex $list @[range @arguments]
+    }
+    List [li $pivot] [li [1+ $pivot] to [llength $list]]
+        #[lindex $list @[range $pivot]] \*
+        #[lindex $list @[range [+ 1 $pivot] to [llength $list]]]
+}
+
+set! *set! {
+    every item pair in [zip @[lsplit $arguments on --]] do {
+        set! @pair
+    }
+}
+
+set! cset! {
+    set! [head $arguments] [@[tail $arguments]]
+}    
+
+command repeat {n body} {
+    if [not [+integer? $n]] then die
+    every [range $n] do $body
+}
+
+command loop body {
+    #we could recurse directly but a raw quote uses far less resources
+    set! real-loop {
+        body
+        real-loop
+    }
+    real-loop
+}
+
+set! 1+ { + @arguments 1 }
+
+set! 1- { - @arguments 1 }
