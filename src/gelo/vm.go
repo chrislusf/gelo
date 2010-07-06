@@ -29,7 +29,7 @@ type VM struct {
 }
 
 type _heritage struct {
-	children map[vm_id]chan bool //TODO factor the last two here into a struct
+	children map[vm_id]chan bool
 	parent   *VM
 }
 
