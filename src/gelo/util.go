@@ -228,7 +228,7 @@ func Convert(item interface{}) Word {
 				}
 			}
 		case []Word:
-			 word = NewListFrom(t)
+			word = NewListFrom(t)
 		case []interface{}:
 			if len(t) == 0 {
 				word = EmptyList

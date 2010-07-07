@@ -30,8 +30,9 @@ type VM struct {
 }
 
 type _heritage struct {
-	children map[vm_id]chan bool
-	parent   *VM
+	blacklist map[string]bool
+	children  map[vm_id]chan bool
+	parent    *VM
 }
 
 //a few boiler plate sanity checks to ensure that a destroyed VM
@@ -122,6 +123,7 @@ func (vm *VM) Destroy() {
 			//If there were no children, however, we can safely discard them now
 			vm.cns, vm.top = nil, nil
 		}
+		h.blacklist = nil
 	}
 	vm.kill_switch = nil
 	vm.heritage = nil

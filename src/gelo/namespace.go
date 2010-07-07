@@ -83,6 +83,25 @@ type namespace_api struct {
 	vm *VM
 }
 
+func (Ns *namespace_api) _is_blacklisted(s string) bool {
+	h := Ns.vm.heritage
+	if h == nil {
+		return false
+	}
+	if h.blacklist == nil {
+		return false
+	}
+	return h.blacklist[s]
+}
+
+func (Ns *namespace_api) _blacklist(s string) {
+	h := Ns.vm.heritage
+	if h.blacklist == nil {
+		h.blacklist = make(map[string]bool)
+	}
+	h.blacklist[s] = true
+}
+
 func (Ns *namespace_api) Depth() (count int) {
 	ns := Ns.vm.cns
 	for ; ns != nil; ns = ns.up {
@@ -101,8 +120,11 @@ func (Ns *namespace_api) LocalDepth() (count int) {
 }
 
 func (Ns *namespace_api) DepthOf(s Symbol) (count int, there bool) {
-	str := s.String()
-	for ns := Ns.vm.cns; ns != nil; ns = ns.up {
+	ns, top, str := Ns.vm.cns, Ns.vm.top, s.String()
+	for ; ns != nil; ns = ns.up {
+		if ns == top && Ns._is_blacklisted(str) {
+			return
+		}
 		ns.mux.RLock()
 		if ns.dict.StrHas(str) {
 			ns.mux.RUnlock()
@@ -117,8 +139,11 @@ func (Ns *namespace_api) DepthOf(s Symbol) (count int, there bool) {
 }
 
 func (Ns *namespace_api) Has(s Symbol) bool {
-	ns, str := Ns.vm.cns, s.String()
+	ns, top, str := Ns.vm.cns, Ns.vm.top, s.String()
 	for ; ns != nil; ns = ns.up {
+		if ns == top && Ns._is_blacklisted(str) {
+			return false
+		}
 		ns.mux.RLock()
 		if ns.dict.StrHas(str) {
 			ns.mux.RUnlock()
@@ -130,8 +155,11 @@ func (Ns *namespace_api) Has(s Symbol) bool {
 }
 
 func (Ns *namespace_api) Lookup(s Symbol) (w Word, ok bool) {
-	ns, str := Ns.vm.cns, s.String()
+	ns, top, str := Ns.vm.cns, Ns.vm.top, s.String()
 	for ; ns != nil; ns = ns.up {
+		if ns == top && Ns._is_blacklisted(str) {
+			return nil, false
+		}
 		ns.mux.RLock()
 		if w, ok = ns.dict.StrGet(str); ok {
 			ns.mux.RUnlock()
@@ -160,18 +188,22 @@ func (Ns *namespace_api) Set(s Symbol, w Word) {
 
 func (Ns *namespace_api) Del(s Symbol) (Word, bool) {
 	ns, top, str := Ns.vm.cns, Ns.vm.top, s.String()
-	above := false
 	for ; ns != nil; ns = ns.up {
 		if ns == top {
-			above = true
+			//we do not blacklist unless it's already there
+			for ; ns != nil; ns = ns.up {
+				ns.mux.RLock()
+				if v, ok := ns.dict.StrGet(str); ok {
+					ns.mux.RUnlock()
+					Ns._blacklist(str)
+					return v, true
+				}
+				ns.mux.RUnlock()
+			}
+			return nil, false
 		}
 		ns.mux.RLock()
 		if v, ok := ns.dict.StrGet(str); ok {
-			if above {
-				ns.mux.RUnlock()
-				RuntimeError(Ns.vm, "Access violation. Attempted to delete",
-					s, "which belongs to a parent vm")
-			}
 			ns.mux.Upgrade()
 			defer ns.mux.Unlock()
 			ns.dict.StrDel(str)
@@ -179,7 +211,7 @@ func (Ns *namespace_api) Del(s Symbol) (Word, bool) {
 		}
 		ns.mux.RUnlock()
 	}
-	return Null, false
+	return nil, false
 }
 
 /*
@@ -202,6 +234,9 @@ func (Ns *namespace_api) MutateBy(s Symbol, f func(Word) (Word, bool)) (Word, bo
 			//it up before we find the original s
 			below.mux.Lock()
 			defer below.mux.Unlock()
+			if Ns._is_blacklisted(str) {
+				return nil, false
+			}
 		}
 		ns.mux.RLock()
 		if w, ok := ns.dict.StrGet(str); ok {
@@ -220,7 +255,7 @@ func (Ns *namespace_api) MutateBy(s Symbol, f func(Word) (Word, bool)) (Word, bo
 		}
 		ns.mux.RUnlock()
 	}
-	return Null, false
+	return nil, false
 }
 
 // Change value of s to w in original ns of s, or least deep ns if s is not
@@ -236,6 +271,9 @@ func (Ns *namespace_api) Mutate(s Symbol, w Word) bool {
 			above = true
 			below.mux.Lock()
 			defer below.mux.Unlock()
+			if Ns._is_blacklisted(str) {
+				return false
+			}
 		}
 		ns.mux.RLock()
 		if old, ok := ns.dict.StrGet(str); ok {
@@ -263,11 +301,13 @@ func (Ns *namespace_api) Swap(s1, s2 Symbol) (w1, w2 Word, ok bool) {
 	//lset and rset are only true in the iteration that they're found
 	above, lset, rset := false, false, false
 	var left, right, below *namespace
-
 	for ; ns != nil; ns = ns.up {
 		if ns != top && !above {
 			below = ns
 		} else if ns == top {
+			if Ns._is_blacklisted(str1) || Ns._is_blacklisted(str2) {
+				break
+			}
 			above = true
 			//at least one symbol hasn't been found yet
 			if left == nil || right == nil {
@@ -338,7 +378,7 @@ func (Ns *namespace_api) Swap(s1, s2 Symbol) (w1, w2 Word, ok bool) {
 
 	//one or both not found
 	if left == nil || right == nil {
-		return Null, Null, false
+		return nil, nil, false
 	}
 
 	//actually get to swap after all that
