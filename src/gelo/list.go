@@ -13,7 +13,7 @@ func NewListFrom(s []Word) *List {
 	head := &List{s[0], nil}
 	tail := head
 	for _, v := range s[1:] {
-		tail.Next = &List{v, nil}
+		tail.Next = &List{v.Copy(), nil}
 		tail = tail.Next
 	}
 	return head

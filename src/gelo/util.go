@@ -200,20 +200,20 @@ func Convert(item interface{}) Word {
 			SystemError(nil, "Unknown type")
 		case nil:
 			word = Null
+		case func(*VM, *List, uint) Word:
+			word = Alien(t)
+		case Word:
+			word = t
+		case defert:
+			word = t
 		case bool:
-			if t {
-				word = True
-			} else {
-				word = False
-			}
+			word = ToBool(t)
 		case string:
 			word = interns(t)
 		case []byte:
-			if len(t) == 0 {
-				word = Null
-			} else {
-				word = intern(t)
-			}
+			word = intern(t)
+		case []int:
+			word = interns(string(t))
 		case []string:
 			if len(t) == 0 {
 				word = EmptyList
@@ -227,6 +227,8 @@ func Convert(item interface{}) Word {
 					}
 				}
 			}
+		case []Word:
+			 word = NewListFrom(t)
 		case []interface{}:
 			if len(t) == 0 {
 				word = EmptyList
@@ -247,13 +249,7 @@ func Convert(item interface{}) Word {
 			}
 			word = &Dict{rep: tmp}
 		case map[string]Word:
-			word = &Dict{rep: t}
-		case defert:
-			word = t
-		case func(*VM, *List, uint) Word:
-			word = Alien(t)
-		case Word:
-			word = t
+			word = NewDictFrom(t)
 		}
 	}
 	return word

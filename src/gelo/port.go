@@ -104,16 +104,15 @@ func (s *_stdio) Equals(w Word) bool {
 	return ok
 }
 
-type _stderr struct {
-	read <-chan Word
-}
+type _stderr struct{}
 
 func (s *_stderr) Send(w Word) {
 	os.Stderr.Write(w.Ser().Bytes())
+	os.Stderr.WriteString("\n")
 }
 
 func (s *_stderr) Recv() Word {
-	return <-s.read
+	return Null
 }
 
 //Cannot close stderr, should be an error but don't have vm access so it would
@@ -147,5 +146,5 @@ func (s *_stderr) Equals(w Word) bool {
 
 var (
 	Stdio  = &_stdio{bufio.NewReader(os.Stdin)}
-	Stderr = &_stderr{make(<-chan Word)}
+	Stderr = &_stderr{}
 )

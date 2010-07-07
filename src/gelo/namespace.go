@@ -83,7 +83,7 @@ type namespace_api struct {
 	vm *VM
 }
 
-func (Ns *namespace_api) Depth() (count byte) {
+func (Ns *namespace_api) Depth() (count int) {
 	ns := Ns.vm.cns
 	for ; ns != nil; ns = ns.up {
 		count++
@@ -91,7 +91,7 @@ func (Ns *namespace_api) Depth() (count byte) {
 	return
 }
 
-func (Ns *namespace_api) LocalDepth() (count byte) {
+func (Ns *namespace_api) LocalDepth() (count int) {
 	ns, top := Ns.vm.cns, Ns.vm.top
 	//if top is nil this is exactly Depth()
 	for ; ns != top; ns = ns.up {
@@ -100,7 +100,7 @@ func (Ns *namespace_api) LocalDepth() (count byte) {
 	return
 }
 
-func (Ns *namespace_api) DepthOf(s Symbol) (count byte, there bool) {
+func (Ns *namespace_api) DepthOf(s Symbol) (count int, there bool) {
 	str := s.String()
 	for ns := Ns.vm.cns; ns != nil; ns = ns.up {
 		ns.mux.RLock()
@@ -150,6 +150,10 @@ func (Ns *namespace_api) LookupOrElse(s Symbol) Word {
 	return w
 }
 
+func (Ns *namespace_api) Get(s Symbol) (Word, bool) {
+	return Ns.vm.cns.get(s)
+}
+
 func (Ns *namespace_api) Set(s Symbol, w Word) {
 	Ns.vm.cns.set(s, w)
 }
@@ -167,7 +171,6 @@ func (Ns *namespace_api) Del(s Symbol) (Word, bool) {
 				ns.mux.RUnlock()
 				RuntimeError(Ns.vm, "Access violation. Attempted to delete",
 					s, "which belongs to a parent vm")
-
 			}
 			ns.mux.Upgrade()
 			defer ns.mux.Unlock()

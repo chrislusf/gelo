@@ -106,13 +106,9 @@ func (p *api) LiteralOrElse(w Word) []byte {
 	if ok {
 		return s.Bytes()
 	}
-	n, ok := w.(*Number)
-	if ok {
-		return n.Ser().Bytes()
-	}
 	q, ok := w.(Quote)
 	if !ok {
-		TypeMismatch(p.vm, "symbol or quote or number", w.Type())
+		TypeMismatch(p.vm, "symbol or quote", w.Type())
 	}
 	return q.Ser().Bytes()
 }
@@ -220,8 +216,22 @@ func (p *api) InvokeWordOrReturn(w Word) (ret Word) {
 }
 
 func (p *api) TailInvokeWordOrReturn(w Word) Word {
+	if s, ok := w.(Symbol); ok {
+		dw, there := p.vm.Ns.Lookup(s)
+		if there {
+			w = dw
+		}
+	}
+	//manually check if it's code and only unprotect if it is
+	if q, ok := w.(Quote); ok {
+		uq := q.unprotect()
+		if _, ok := uq.fcode(); !ok {
+			return q
+		}
+		w = q
+	}
 	switch w.(type) {
-	case Quote, Alien, Symbol:
+	case Quote, Alien:
 		return p.TailInvoke(AsList(w))
 	}
 	return w

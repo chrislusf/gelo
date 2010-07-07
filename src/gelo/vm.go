@@ -7,7 +7,7 @@ import (
 
 const VERSION = "0.1.0 alpha"
 
-type vm_id uint
+type vm_id uint32
 
 var external_id vm_id = 0 //called from Go code outside a VM
 var _max_id vm_id = 0     //first VM is 1 since this gets inc'd
@@ -23,6 +23,7 @@ type VM struct {
 	cns, top    *namespace
 	program     *quote
 	io          Port
+	running     bool
 	id          vm_id
 	kill_switch chan bool
 	heritage    *_heritage
@@ -51,7 +52,7 @@ error:
 // functions to create or destroy virtual machines
 
 func _newVM(io Port) *VM {
-	vm := &VM{io: io}
+	vm := &VM{io: io, running: false}
 	//proxies
 	vm.API = &api{vm}
 	vm.Ns = &namespace_api{vm}
@@ -93,7 +94,9 @@ func (vm *VM) Spawn() *VM {
 }
 
 func (vm *VM) Destroy() {
-	vm._sanity("be destroyed again")
+	if vm == nil {
+		return
+	}
 	sys_trace("VM", vm.id, "destroyed")
 	//either already dead or never had a parent
 	if vm.heritage != nil {
@@ -123,9 +126,13 @@ func (vm *VM) Destroy() {
 	vm.kill_switch = nil
 	vm.heritage = nil
 	vm.io = nil
-	vm.API.vm = nil
+	if vm.API != nil {
+		vm.API.vm = nil
+	}
 	vm.API = nil
-	vm.Ns.vm = nil
+	if vm.Ns != nil {
+		vm.Ns.vm = nil
+	}
 	vm.Ns = nil
 }
 
@@ -143,8 +150,24 @@ func Kill(vm *VM) {
 	}
 }
 
+func (vm *VM) IsDead() bool {
+	return vm == nil || vm.API == nil
+}
+
+func (vm *VM) IsRunning() bool {
+	if vm == nil {
+		return false
+	}
+	return vm.running
+}
+
+func (vm *VM) IsIdle() bool {
+	return !vm.IsDead() && !vm.IsIdle()
+}
+
 //Change the io port of vm. It is not safe to call this while the vm is running.
 func (vm *VM) Redirect(io Port) Port {
+	vm._sanity("redirect I/O port")
 	p := vm.io
 	vm.io = io
 	return p
@@ -201,6 +224,15 @@ func (vm *VM) ReadBytes(name string) ([]byte, bool) {
 	return s.Ser().Bytes(), true
 }
 
+func (vm *VM) ReadRunes(name string) ([]int, bool) {
+	vm._sanity("read a byte string out")
+	s, ok := vm.cns.copyOut(name)
+	if !ok {
+		return nil, false
+	}
+	return s.Ser().Runes(), true
+}
+
 func (vm *VM) ReadBool(name string) (bool, bool) {
 	vm._sanity("read a boolean out")
 	B, ok := vm.cns.copyOut(name)
@@ -234,7 +266,7 @@ func (vm *VM) ReadSlice(name string) ([]Word, bool) {
 	if !ok {
 		return nil, false
 	}
-	return s.Slice(), true
+	return s.Slice(), true //TODO copies twice
 }
 
 func (vm *VM) ReadQuote(name string) (Quote, bool) {
@@ -263,7 +295,7 @@ func (vm *VM) ReadPort(name string) (Port, bool) {
 	return p, true
 }
 
-func (vm *VM) ReadChan(name string) (chan Word, bool) {
+func (vm *VM) ReadChan(name string) (*Chan, bool) {
 	vm._sanity("read a chan out")
 	C, ok := vm.cns.copyOut(name)
 	if !ok {
@@ -273,7 +305,7 @@ func (vm *VM) ReadChan(name string) (chan Word, bool) {
 	if !ok {
 		return nil, false
 	}
-	return c.c, true
+	return c, true
 }
 
 func (vm *VM) ReadInt(name string) (int64, bool) {
@@ -329,6 +361,10 @@ func (vm *VM) SetProgram(q Quote) (err Error) {
 	return
 }
 
+func (vm *VM) GetProgram() Quote {
+	return vm.program
+}
+
 //Never call from a goroutine that doesn't own the VM
 func (vm *VM) ParseProgram(in io.Reader) (err Error) {
 	vm._sanity("parse and set a new program")
@@ -360,7 +396,7 @@ func (vm *VM) Do(in string) (ret Word, err Error) {
 			case kill_control_code:
 				sys_trace("VM", vm.id, "was killed")
 				vm.Destroy()
-				ret = Null
+				ret, err = nil, killed(vm)
 			case halt_control_code:
 				sys_trace("VM", vm.id, "halted")
 				ret = (*List)(t)
@@ -371,7 +407,23 @@ func (vm *VM) Do(in string) (ret Word, err Error) {
 			}
 		}
 	}()
-	return vm.eval(parse(newBufFromString(in)), nil), nil
+	code := parse(newBufFromString(in))
+	//we do this so a syntax error raised by the program can be caught but
+	//a syntax error in 'in' is reported
+	defer func() {
+		if x := recover(); x != nil {
+			if e, ok := x.(ErrSyntax); ok {
+				ret, err = nil, e
+			} else {
+				panic(x)
+			}
+		}
+		vm.running = false
+	}()
+	vm.running = true
+	ret = vm.eval(code, nil)
+	ret.DeepCopy()
+	return
 }
 
 //Never call from a goroutine that doesn't own the VM
@@ -381,6 +433,7 @@ func (vm *VM) Exec(args interface{}) (ret Word, err Error) {
 		SystemError(vm, "attempted to execute VM with no program")
 	}
 	defer func() {
+		vm.running = false //true even if we error out before setting this true
 		if x := recover(); x != nil {
 			switch t := x.(type) {
 			default:
@@ -391,7 +444,7 @@ func (vm *VM) Exec(args interface{}) (ret Word, err Error) {
 			case kill_control_code:
 				sys_trace("VM", vm.id, "killed")
 				vm.Destroy()
-				ret = Null
+				ret, err = nil, killed(vm)
 			case halt_control_code:
 				sys_trace("VM", vm.id, "halted")
 				ret = (*List)(t)
@@ -415,7 +468,9 @@ func (vm *VM) Exec(args interface{}) (ret Word, err Error) {
 		SystemError(vm, "The program is corrupt")
 	}
 
+	vm.running = true //unset in defer handler
 	ret = vm.eval(code, Args)
+	ret = ret.DeepCopy()
 	return
 }
 

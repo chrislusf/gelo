@@ -29,7 +29,12 @@ func IsNullString(w Word) bool {
 	return len(s.Ser().Bytes()) == 0
 }
 
-func intern(s []byte) Symbol { return _iSymbol(s) }
+func intern(s []byte) Symbol {
+	if len(s) == 0 {
+		return Null
+	}
+	return _iSymbol(s)
+}
 
 func interns(s string) Symbol { return intern([]byte(s)) }
 
@@ -41,13 +46,19 @@ func (_ _dSymbol) Type() Symbol { return interns("*SYMBOL*") }
 
 func (s _dSymbol) Ser() Symbol { return s }
 
-func (s _dSymbol) Bytes() []byte { return []byte(s) }
+func (s _dSymbol) Bytes() []byte { return dup([]byte(s)) }
 
 func (s _dSymbol) String() string { return string([]byte(s)) }
 
 func (s _dSymbol) Runes() []int { return []int(string([]byte(s))) }
 
-func (s _dSymbol) Copy() Word { return _dSymbol(dup([]byte(s))) }
+func (s _dSymbol) Copy() Word {
+	sb := []byte(s)
+	if len(sb) == 0 {
+		return Null
+	}
+	return _dSymbol(dup(sb))
+}
 
 func (s _dSymbol) DeepCopy() Word { return s.Copy() }
 
@@ -65,13 +76,19 @@ func (_ _iSymbol) Type() Symbol { return interns("*SYMBOL*") }
 
 func (s _iSymbol) Ser() Symbol { return s }
 
-func (s _iSymbol) Bytes() []byte { return []byte(s) }
+func (s _iSymbol) Bytes() []byte { return dup([]byte(s)) }
 
 func (s _iSymbol) String() string { return string([]byte(s)) }
 
 func (s _iSymbol) Runes() []int { return []int(string([]byte(s))) }
 
-func (s _iSymbol) Copy() Word { return _dSymbol(dup([]byte(s))) } //not a typo
+func (s _iSymbol) Copy() Word {
+	sb := []byte(s)
+	if len(s) == 0 {
+		return Null
+	}
+	return _dSymbol(dup(sb)) //not a typo
+}
 
 func (s _iSymbol) DeepCopy() Word { return s.Copy() }
 

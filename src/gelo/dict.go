@@ -7,7 +7,7 @@ func NewDict() *Dict {
 func NewDictFrom(m map[string]Word) *Dict {
 	d := make(map[string]Word)
 	for k, v := range m {
-		d[k] = v
+		d[k] = v.Copy()
 	}
 	return &Dict{rep: d}
 }
@@ -104,7 +104,7 @@ func UnserializeDictFrom(w Word) (*Dict, bool) {
 func (d *Dict) Map() map[string]Word {
 	ret := make(map[string]Word)
 	for k, v := range map[string]Word(d.rep) {
-		ret[k] = v.DeepCopy()
+		ret[k] = v
 	}
 	return ret
 }
@@ -192,6 +192,9 @@ func (d *Dict) DeepCopy() Word {
 func (d *Dict) Equals(w Word) bool {
 	od, ok := w.(*Dict)
 	if !ok {
+		return false
+	}
+	if len(d.rep) != len(od.rep) {
 		return false
 	}
 	for k, v := range d.rep {

@@ -5,6 +5,10 @@ import (
 	"bytes"
 )
 
+func killed(vm *VM) Error {
+	return ErrRuntime{_make_error(vm, []interface{}{"VM killed"})}
+}
+
 //note a system error is not a word and should only be called if the impossible
 //to recover from occurs
 func SystemError(vm *VM, s ...interface{}) {
