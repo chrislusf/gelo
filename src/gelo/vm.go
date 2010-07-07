@@ -21,6 +21,7 @@ type VM struct {
 	API         *api
 	Ns          *namespace_api
 	cns, top    *namespace
+	mux         *sync.RWMutex
 	program     *quote
 	io          Port
 	running     bool
@@ -53,11 +54,10 @@ error:
 // functions to create or destroy virtual machines
 
 func _newVM(io Port) *VM {
-	vm := &VM{io: io, running: false}
+	vm := &VM{io: io, mux: new(sync.RWMutex), kill_switch: make(chan bool)}
 	//proxies
 	vm.API = &api{vm}
 	vm.Ns = &namespace_api{vm}
-	vm.kill_switch = make(chan bool)
 	_max_id_mutex.Lock()
 	defer _max_id_mutex.Unlock()
 	_max_id++
@@ -98,6 +98,11 @@ func (vm *VM) Destroy() {
 	if vm == nil {
 		return
 	}
+	if vm.running {
+		//therefore we are in a different goroutine
+		vm.kill_switch <- true
+		return
+	}
 	sys_trace("VM", vm.id, "destroyed")
 	//either already dead or never had a parent
 	if vm.heritage != nil {
@@ -109,7 +114,7 @@ func (vm *VM) Destroy() {
 				pm[vm.id] = nil, false
 			}
 		}
-		//if we spawned any VMs destroy them
+		//if we spawned any VMs, kill them
 		if h.children != nil {
 			for _, child := range h.children {
 				child <- true
@@ -136,6 +141,7 @@ func (vm *VM) Destroy() {
 		vm.Ns.vm = nil
 	}
 	vm.Ns = nil
+	vm.mux = nil
 }
 
 func Kill(vm *VM) {
@@ -169,6 +175,8 @@ func (vm *VM) IsIdle() bool {
 
 //Change the io port of vm. It is not safe to call this while the vm is running.
 func (vm *VM) Redirect(io Port) Port {
+	vm.mux.RLock()
+	defer vm.mux.RUnlock()
 	vm._sanity("redirect I/O port")
 	p := vm.io
 	vm.io = io
@@ -185,6 +193,8 @@ func (vm *VM) ProcID() vm_id {
 
 func (vm *VM) Register(name string, item interface{}) {
 	vm._sanity("register an item")
+	vm.mux.RLock()
+	defer vm.mux.RUnlock()
 	vm.cns.set(interns(name), Convert(item))
 	vm.API.Trace("Registered:", name)
 }
@@ -205,11 +215,15 @@ func (vm *VM) RegisterBundles(bundles []map[string]interface{}) {
 
 func (vm *VM) ReadWord(name string) (Word, bool) {
 	vm._sanity("read a word out")
+	vm.mux.RLock()
+	defer vm.mux.RUnlock()
 	return vm.cns.copyOut(name)
 }
 
 func (vm *VM) ReadString(name string) (string, bool) {
 	vm._sanity("read a string out")
+	vm.mux.RLock()
+	defer vm.mux.RUnlock()
 	s, ok := vm.cns.copyOut(name)
 	if !ok {
 		return "", false
@@ -219,6 +233,8 @@ func (vm *VM) ReadString(name string) (string, bool) {
 
 func (vm *VM) ReadBytes(name string) ([]byte, bool) {
 	vm._sanity("read a byte string out")
+	vm.mux.RLock()
+	defer vm.mux.RUnlock()
 	s, ok := vm.cns.copyOut(name)
 	if !ok {
 		return nil, false
@@ -228,6 +244,8 @@ func (vm *VM) ReadBytes(name string) ([]byte, bool) {
 
 func (vm *VM) ReadRunes(name string) ([]int, bool) {
 	vm._sanity("read a byte string out")
+	vm.mux.RLock()
+	defer vm.mux.RUnlock()
 	s, ok := vm.cns.copyOut(name)
 	if !ok {
 		return nil, false
@@ -237,6 +255,8 @@ func (vm *VM) ReadRunes(name string) ([]int, bool) {
 
 func (vm *VM) ReadBool(name string) (bool, bool) {
 	vm._sanity("read a boolean out")
+	vm.mux.RLock()
+	defer vm.mux.RUnlock()
 	B, ok := vm.cns.copyOut(name)
 	if !ok {
 		return false, false
@@ -250,6 +270,8 @@ func (vm *VM) ReadBool(name string) (bool, bool) {
 
 func (vm *VM) ReadMap(name string) (map[string]Word, bool) {
 	vm._sanity("read a map out")
+	vm.mux.RLock()
+	defer vm.mux.RUnlock()
 	M, ok := vm.cns.copyOut(name)
 	if !ok {
 		return nil, false
@@ -260,6 +282,8 @@ func (vm *VM) ReadMap(name string) (map[string]Word, bool) {
 
 func (vm *VM) ReadSlice(name string) ([]Word, bool) {
 	vm._sanity("read a slice out")
+	vm.mux.RLock()
+	defer vm.mux.RUnlock()
 	S, ok := vm.cns.copyOut(name)
 	if !ok {
 		return nil, false
@@ -273,6 +297,8 @@ func (vm *VM) ReadSlice(name string) ([]Word, bool) {
 
 func (vm *VM) ReadQuote(name string) (Quote, bool) {
 	vm._sanity("read a quote out")
+	vm.mux.RLock()
+	defer vm.mux.RUnlock()
 	Q, ok := vm.cns.copyOut(name)
 	if !ok {
 		return nil, false
@@ -286,6 +312,8 @@ func (vm *VM) ReadQuote(name string) (Quote, bool) {
 
 func (vm *VM) ReadPort(name string) (Port, bool) {
 	vm._sanity("read a port out")
+	vm.mux.RLock()
+	defer vm.mux.RUnlock()
 	P, ok := vm.cns.copyOut(name)
 	if !ok {
 		return nil, false
@@ -299,6 +327,8 @@ func (vm *VM) ReadPort(name string) (Port, bool) {
 
 func (vm *VM) ReadChan(name string) (*Chan, bool) {
 	vm._sanity("read a chan out")
+	vm.mux.RLock()
+	defer vm.mux.RUnlock()
 	C, ok := vm.cns.copyOut(name)
 	if !ok {
 		return nil, false
@@ -312,6 +342,8 @@ func (vm *VM) ReadChan(name string) (*Chan, bool) {
 
 func (vm *VM) ReadInt(name string) (int64, bool) {
 	vm._sanity("read an integer out")
+	vm.mux.RLock()
+	defer vm.mux.RUnlock()
 	N, ok := vm.cns.copyOut(name)
 	if !ok {
 		return 0, false
@@ -329,6 +361,8 @@ func (vm *VM) ReadInt(name string) (int64, bool) {
 
 func (vm *VM) ReadFloat(name string) (float64, bool) {
 	vm._sanity("read a number out")
+	vm.mux.RLock()
+	defer vm.mux.RUnlock()
 	N, ok := vm.cns.copyOut(name)
 	if !ok {
 		return 0, false
@@ -344,6 +378,8 @@ func (vm *VM) ReadFloat(name string) (float64, bool) {
 
 func (vm *VM) SetProgram(q Quote) (err Error) {
 	vm._sanity("set a new program")
+	vm.mux.Lock()
+	defer vm.mux.Unlock()
 	iq := q.unprotect()
 	_, ok := iq.fcode()
 	if !ok {
@@ -364,12 +400,18 @@ func (vm *VM) SetProgram(q Quote) (err Error) {
 }
 
 func (vm *VM) GetProgram() Quote {
+	if vm.mux != nil {
+		vm.mux.RLock()
+		defer vm.mux.RUnlock()
+	}
 	return vm.program
 }
 
 //Never call from a goroutine that doesn't own the VM
 func (vm *VM) ParseProgram(in io.Reader) (err Error) {
 	vm._sanity("parse and set a new program")
+	vm.mux.Lock()
+	defer vm.mux.Unlock()
 	defer func() {
 		if x := recover(); x != nil {
 			if synerr, ok := x.(ErrSyntax); ok {
@@ -390,6 +432,8 @@ func (vm *VM) ParseProgram(in io.Reader) (err Error) {
 //if the VM is executing a program
 func (vm *VM) Do(in string) (ret Word, err Error) {
 	vm._sanity("execute: " + in)
+	vm.mux.Lock()
+	defer vm.mux.Unlock()
 	defer func() {
 		if x := recover(); x != nil {
 			switch t := x.(type) {
@@ -431,6 +475,8 @@ func (vm *VM) Do(in string) (ret Word, err Error) {
 //Never call from a goroutine that doesn't own the VM
 func (vm *VM) Exec(args interface{}) (ret Word, err Error) {
 	vm._sanity("execute its program")
+	vm.mux.Lock()
+	defer vm.mux.Unlock()
 	if vm.program == nil {
 		SystemError(vm, "attempted to execute VM with no program")
 	}

@@ -159,11 +159,12 @@ func (p *api) Invoke(args *List) (ret Word, err Error) {
 //returned from the callee.
 func (p *api) TailInvoke(args *List) Word {
 	if args == nil {
-		SystemError(p.vm, "Invoke* attempted to invoke nothing")
+		return Null
 	}
-	w, c, args := p.vm.peval(args, uint(args.Len()-1))
+	vm := p.vm
+	w, c, args := vm.peval(args, uint(args.Len()-1))
 	if _, is_defer := w.(defert); is_defer {
-		SystemError(p.vm, "Cannot register a defer via Invoke*")
+		RuntimeError(vm, "Cannot register a defer via Invoke*")
 	}
 	if c != nil {
 		if args == nil {
@@ -171,9 +172,10 @@ func (p *api) TailInvoke(args *List) Word {
 			//from an alien.
 			//TODO, a way to pass arguments back to eval so that we can always
 			//tail call.
+			//Alternately, we could build a quote wrapping the quote . . .
 			return &quote{false, c, nil}
 		} else {
-			return p.vm.eval(c, args)
+			return vm.eval(c, args)
 		}
 	}
 	return w
