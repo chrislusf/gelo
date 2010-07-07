@@ -99,6 +99,14 @@ func AsList(w Word) *List {
 	return &List{w, nil}
 }
 
+//If l is a singleton, return its value; otherwise return l
+func WordOrList(l *List) Word {
+	if l != nil && l.Next == nil {
+		return l.Value
+	}
+	return l
+}
+
 func (l *List) Slice() []Word {
 	if l == nil {
 		return nil
