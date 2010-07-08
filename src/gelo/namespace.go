@@ -154,6 +154,44 @@ func (Ns *namespace_api) Has(s Symbol) bool {
 	return false
 }
 
+// lvls = 0 => only the current namespace
+// lvls = n => first 1 + min(n, Depth()) namespaces
+// lvls < 0 => capture Depth() namespaces
+func (Ns *namespace_api) Locals(lvls int) *Dict {
+	vm := Ns.vm
+	ns, top, above := vm.cns, vm.top, false
+	var blackl map[string]bool
+	var count int
+	var ok bool
+	if vm.heritage != nil {
+		blackl = vm.heritage.blacklist
+	}
+	m := make(map[string]Word)
+	ns.mux.RLock()
+	for k, v := range ns.dict.rep {
+		m[k] = v
+	}
+	ns.mux.RUnlock()
+	for ; count != lvls && ns != nil; ns = ns.up {
+		count++
+		above = above || ns == top //false until ns == top and true thereafter
+		ns.mux.RLock()
+		for k, v := range ns.dict.rep {
+			if _, ok = m[k]; !ok {
+				if above {
+					if blackl != nil && blackl[k] {
+						continue
+					}
+					v = v.DeepCopy()
+				}
+				m[k] = v
+			}
+		}
+		ns.mux.RUnlock()
+	}
+	return &Dict{rep: m}
+}
+
 func (Ns *namespace_api) Lookup(s Symbol) (w Word, ok bool) {
 	var above bool
 	ns, top, str := Ns.vm.cns, Ns.vm.top, s.String()
