@@ -157,7 +157,7 @@ func (l *List) MapOrApply(f func(Word) Word) Word {
 	return l.Map(f)
 }
 
-func (_ *List) Type() Symbol { return interns("*LIST*") }
+func (*List) Type() Symbol { return interns("*LIST*") }
 
 func (l *List) Ser() Symbol {
 	var bytes []byte

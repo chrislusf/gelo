@@ -151,7 +151,7 @@ func (d *Dict) StrDel(s string) {
 	d.rep[s] = Null, false
 }
 
-func (_ *Dict) Type() Symbol { return interns("*DICT*") }
+func (*Dict) Type() Symbol { return interns("*DICT*") }
 func (d *Dict) Ser() Symbol {
 	if d.ser != nil {
 		return BytesToSym(d.ser)

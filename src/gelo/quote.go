@@ -101,7 +101,7 @@ func (q *quote) Equals(w Word) bool {
 
 func (q *quote) Ser() Symbol { return BytesToSym(dup(q.source)) }
 
-func (_ *quote) Type() Symbol { return interns("*QUOTE*") }
+func (*quote) Type() Symbol { return interns("*QUOTE*") }
 
 //quotes are immutable
 func (q *quote) Copy() Word     { return q }
@@ -124,7 +124,7 @@ func (q *protected_quote) Equals(w Word) bool {
 
 func (q *protected_quote) Ser() Symbol { return q.protectee.Ser() }
 
-func (_ *protected_quote) Type() Symbol { return interns("*QUOTE*") }
+func (*protected_quote) Type() Symbol { return interns("*QUOTE*") }
 
 func (q *protected_quote) Copy() Word     { return q }
 func (q *protected_quote) DeepCopy() Word { return q }

@@ -12,7 +12,7 @@ func ToBool(b bool) Bool {
 
 func (b Bool) True() bool { return bool(b) }
 
-func (_ Bool) Type() Symbol { return interns("*BOOLEAN*") }
+func (Bool) Type() Symbol { return interns("*BOOLEAN*") }
 
 func (b Bool) Ser() Symbol {
 	if b {

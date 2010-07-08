@@ -54,10 +54,18 @@ type Dict struct {
 
 type Alien func(*VM, *List, uint) Word
 
-func (_ Alien) Type() Symbol   { return interns("*ALIEN*") }
-func (a Alien) Ser() Symbol    { return a.Type() }
-func (a Alien) Copy() Word     { return a }
-func (a Alien) DeepCopy() Word { return a }
+func (Alien) Type() Symbol {
+	return interns("*ALIEN*")
+}
+func (a Alien) Ser() Symbol {
+	return a.Type()
+}
+func (a Alien) Copy() Word {
+	return a
+}
+func (a Alien) DeepCopy() Word {
+	return a
+}
 func (a Alien) Equals(w Word) bool {
 	oa, ok := w.(Alien)
 	if !ok {
@@ -67,11 +75,19 @@ func (a Alien) Equals(w Word) bool {
 }
 
 //defined at the top of vm.go as it is a special internal tag
-func (_ defert) Type() Symbol   { return interns("*DEFER*") }
-func (d defert) Ser() Symbol    { return d.Type() }
-func (d defert) Copy() Word     { return d }
-func (d defert) DeepCopy() Word { return d }
-func (_ defert) Equals(w Word) bool {
+func (defert) Type() Symbol {
+	return interns("*DEFER*")
+}
+func (d defert) Ser() Symbol {
+	return d.Type()
+}
+func (d defert) Copy() Word {
+	return d
+}
+func (d defert) DeepCopy() Word {
+	return d
+}
+func (defert) Equals(w Word) bool {
 	_, ok := w.(defert)
 	return ok
 }

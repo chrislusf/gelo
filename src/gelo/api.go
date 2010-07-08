@@ -6,7 +6,7 @@ type api struct {
 	vm *VM
 }
 
-func (_ *api) Trace(message ...interface{}) {
+func (*api) Trace(message ...interface{}) {
 	alien_trace(message)
 }
 
@@ -192,7 +192,7 @@ func (p *api) Invoke(args *List) (ret Word, err Error) {
 
 //The TailInvoke* family is only to be called when the result is to be
 //returned from the callee.
-func (_ *api) TailInvoke(args *List) Word {
+func (*api) TailInvoke(args *List) Word {
 	return build_quote_from_list(args)
 }
 

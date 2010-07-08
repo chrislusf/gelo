@@ -42,7 +42,7 @@ func interns(s string) Symbol { return intern([]byte(s)) }
 //dynamic, ie not interned, symbols
 type _dSymbol []byte
 
-func (_ _dSymbol) Type() Symbol { return interns("*SYMBOL*") }
+func (_dSymbol) Type() Symbol { return interns("*SYMBOL*") }
 
 func (s _dSymbol) Ser() Symbol { return s }
 
@@ -66,13 +66,13 @@ func (s _dSymbol) Equals(w Word) bool {
 	return bytes.Equal([]byte(s), w.Ser().Bytes())
 }
 
-func (_ _dSymbol) interned() bool { return false }
+func (_dSymbol) interned() bool { return false }
 
 
 //This type is to be replaced by an index into an intern pool
 type _iSymbol []byte
 
-func (_ _iSymbol) Type() Symbol { return interns("*SYMBOL*") }
+func (_iSymbol) Type() Symbol { return interns("*SYMBOL*") }
 
 func (s _iSymbol) Ser() Symbol { return s }
 
@@ -96,4 +96,4 @@ func (s _iSymbol) Equals(w Word) bool {
 	return bytes.Equal([]byte(s), w.Ser().Bytes())
 }
 
-func (_ _iSymbol) interned() bool { return true }
+func (_iSymbol) interned() bool { return true }

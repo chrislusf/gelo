@@ -82,7 +82,7 @@ func (n *Number) Int() (int64, bool) {
 	return int64(num), true
 }
 
-func (_ *Number) Type() Symbol {
+func (*Number) Type() Symbol {
 	return interns("*NUMBER*")
 }
 
