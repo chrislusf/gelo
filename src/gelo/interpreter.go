@@ -116,9 +116,7 @@ func (vm *VM) peval(line *List, ac uint) (ret Word, c *command, args *List) {
 			//attempted to invoke a literal, nonempty quote,
 			//we reparse and let any syntax errors bubble up to the top
 			//so the user can see what went wrong and where
-			parse(newBufFrom(q.source))
-			//just in case something goes south, we confuse our users further:
-			SystemError(vm, "No syntax errors but there should be")
+			panic(force_synerr(vm, q))
 		}
 	}
 	return
@@ -185,11 +183,10 @@ func (vm *VM) eval(script *command, arguments *List) (ret Word) {
 		//tail call (or 1 liner)
 		ret, script, arguments = vm.peval(vm.rewrite(script.cmd))
 		if _, ok := ret.(defert); ok {
-			RuntimeError(vm, "deref call cannot be in tail position")
+			RuntimeError(vm, "defer call cannot be in tail position")
 		}
 		//before we continue, see if anyone wants to kill us
 		if _, kill = <-vm.kill_switch; kill {
-			<-vm.kill_switch //drain
 			panic(kill_control_code(byte(0)))
 		}
 	}

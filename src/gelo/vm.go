@@ -48,7 +48,7 @@ func (vm *VM) _sanity(msg string) {
 	}
 	return
 error:
-	SystemError(vm, "Dead VM attempted to "+msg)
+	ProgrammerError(vm, "Dead VM attempted to "+msg)
 }
 
 // functions to create or destroy virtual machines
@@ -185,8 +185,8 @@ func (vm *VM) Redirect(io Port) Port {
 
 // commands to get information from a virtual machine
 
-func (vm *VM) ProcID() vm_id {
-	return vm.id
+func (vm *VM) ProcID() uint32 {
+	return uint32(vm.id)
 }
 
 //Register* -- add values to a VM
@@ -393,7 +393,7 @@ func (vm *VM) SetProgram(q Quote) (err Error) {
 			}
 		}()
 		//force the error so we can return it
-		parse(newBufFrom(iq.source))
+		err = force_synerr(vm, iq)
 	}
 	vm.program = iq
 	return
@@ -404,7 +404,7 @@ func (vm *VM) GetProgram() Quote {
 		vm.mux.RLock()
 		defer vm.mux.RUnlock()
 	}
-	return vm.program
+	return &protected_quote{vm.program}
 }
 
 //Never call from a goroutine that doesn't own the VM
@@ -478,7 +478,7 @@ func (vm *VM) Exec(args interface{}) (ret Word, err Error) {
 	vm.mux.Lock()
 	defer vm.mux.Unlock()
 	if vm.program == nil {
-		SystemError(vm, "attempted to execute VM with no program")
+		ProgrammerError(vm, "attempted to execute VM with no program")
 	}
 	defer func() {
 		vm.running = false //true even if we error out before setting this true
@@ -512,8 +512,9 @@ func (vm *VM) Exec(args interface{}) (ret Word, err Error) {
 
 	sys_trace("evaluating with arguments", Args)
 	code, ok := vm.program.fcode()
-	if !ok { //should return syntax error. Quote needs a force syntax error func?
-		SystemError(vm, "The program is corrupt")
+	if !ok {
+		//Somehow the program's quote was altered since it has been set
+		SystemError(vm, "The program has become corrupt")
 	}
 
 	vm.running = true //unset in defer handler

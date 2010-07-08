@@ -197,7 +197,7 @@ func Convert(item interface{}) Word {
 	if !ok {
 		switch t := item.(type) {
 		default:
-			SystemError(nil, "Unknown type")
+			ProgrammerError(nil, "Convert given unknown type")
 		case nil:
 			word = Null
 		case func(*VM, *List, uint) Word:

@@ -5,11 +5,29 @@ import "bytes"
 var Noop = &protected_quote{&quote{false, nil, []byte("")}}
 
 func NewQuoteFrom(w Word) Quote {
+	if q, ok := w.(Quote); ok {
+		return q
+	}
 	return &protected_quote{&quote{false, nil, dup(w.Ser().Bytes())}}
 }
 
 func NewQuoteFromGo(t []byte) Quote {
 	return &protected_quote{&quote{false, nil, dup(t)}}
+}
+
+//we ONLY call this in very specific situations where we KNOW the quote does not
+//parse and want the syntax error for error reporting
+func force_synerr(vm *VM, q Quote) (ret ErrSyntax) {
+	Q := q.unprotect()
+	defer func() {
+		x := recover()
+		if x == nil {
+			SystemError(nil, "Assumed\n", q, "had syntax error falsely")
+		}
+		ret = x.(ErrSyntax)
+	}()
+	parse(newBufFrom(Q.source))
+	return
 }
 
 func (q *quote) fcode() (code *command, ok bool) {

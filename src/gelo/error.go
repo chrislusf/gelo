@@ -7,7 +7,7 @@ import (
 
 //hopefully one day we also have name, lineno, etc
 type _error struct {
-	from vm_id
+	from uint32
 	msg  string
 }
 
@@ -21,6 +21,13 @@ type _errSystem struct {
 	_error
 }
 
+//This error type isn't meant to be caught by this program or the host program
+//it signals a static misuse of Gelo that needs to be corrected. Such as trying
+//to run a VM without a program or use a VM that has been killed
+type HostProgrammerError struct {
+	_error
+}
+
 type ErrSyntax struct {
 	_error
 }
@@ -30,6 +37,10 @@ type ErrRuntime struct {
 }
 
 //Predefined kinds of errors
+
+func ProgrammerError(vm *VM, s ...interface{}) {
+	panic(HostProgrammerError{_make_error(vm, s)})
+}
 
 //note a system error is not a word and should only be called if the impossible
 //to recover from occurs
@@ -84,7 +95,7 @@ func killed(vm *VM) Error {
 //common methods on error
 
 func (e _error) From() uint32 {
-	return uint32(e.from)
+	return e.from
 }
 
 func (e _error) String() string {
@@ -150,7 +161,7 @@ func _make_errorM(vm *VM, s ...interface{}) _error {
 }
 
 func _make_error(vm *VM, s []interface{}) _error {
-	var id vm_id
+	var id uint32
 	if vm != nil {
 		id = vm.ProcID()
 	}
