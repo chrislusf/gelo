@@ -155,14 +155,21 @@ func (Ns *namespace_api) Has(s Symbol) bool {
 }
 
 func (Ns *namespace_api) Lookup(s Symbol) (w Word, ok bool) {
+	var above bool
 	ns, top, str := Ns.vm.cns, Ns.vm.top, s.String()
 	for ; ns != nil; ns = ns.up {
-		if ns == top && Ns._is_blacklisted(str) {
-			return nil, false
+		if ns == top {
+			above = true
+			if Ns._is_blacklisted(str) {
+				return nil, false
+			}
 		}
 		ns.mux.RLock()
 		if w, ok = ns.dict.StrGet(str); ok {
 			ns.mux.RUnlock()
+			if above {
+				w = w.DeepCopy()
+			}
 			return w, true
 		}
 		ns.mux.RUnlock()
