@@ -512,7 +512,7 @@ func (vm *VM) Exec(args interface{}) (ret Word, err Error) {
 
 	sys_trace("evaluating with arguments", Args)
 	code, ok := vm.program.fcode()
-	if !ok {
+	if !ok { //should return syntax error. Quote needs a force syntax error func?
 		SystemError(vm, "The program is corrupt")
 	}
 

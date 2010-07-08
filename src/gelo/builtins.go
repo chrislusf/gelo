@@ -23,6 +23,7 @@ func BI_eval(vm *VM, args *List, ac uint) (ret Word) {
 	defer func() { vm.cns, vm.top = ns, top }()
 	vm.top = ns
 	vm.cns = newNamespace(ns)
+	//we use this rather than Invoke so we can catch halt's
 	return vm.API.InvokeOrElse(args)
 }
 
@@ -117,7 +118,7 @@ func BI_Quote(vm *VM, args *List, ac uint) Word {
 	if ac != 1 {
 		ArgumentError(vm, "Quote", "source-string?", args)
 	}
-	return &protected_quote{&quote{false, nil, args.Value.Ser().Bytes()}}
+	return NewQuoteFrom(args.Value)
 }
 
 var EvaluationCommands = map[string]interface{}{

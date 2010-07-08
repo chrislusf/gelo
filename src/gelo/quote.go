@@ -4,6 +4,14 @@ import "bytes"
 
 var Noop = &protected_quote{&quote{false, nil, []byte("")}}
 
+func NewQuoteFrom(w Word) Quote {
+	return &protected_quote{&quote{false, nil, dup(w.Ser().Bytes())}}
+}
+
+func NewQuoteFromGo(t []byte) Quote {
+	return &protected_quote{&quote{false, nil, dup(t)}}
+}
+
 func (q *quote) fcode() (code *command, ok bool) {
 	if q.literal {
 		//no need to keep trying to parse over and over

@@ -8,7 +8,7 @@ func NewList(s ...Word) *List {
 
 func NewListFrom(s []Word) *List {
 	if len(s) == 0 {
-		return EmptyList
+		return (*List)(nil)
 	}
 	head := &List{s[0], nil}
 	tail := head

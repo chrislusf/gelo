@@ -246,7 +246,7 @@ func (p *api) PartialEval(q Quote) (*List, bool) {
 		return nil, false
 	}
 	if cmds == nil {
-		//noop, return singleton containing empty list
+		//noop, return singleton *containing* empty list
 		return NewList(EmptyList), true
 	}
 	var ghead, gtail *List
