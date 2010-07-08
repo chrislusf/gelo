@@ -1,7 +1,5 @@
 package gelo
 
-import "os"
-
 type Word interface {
 	Type() Symbol
 	Ser() Symbol
@@ -32,9 +30,9 @@ type Port interface {
 }
 
 type Error interface {
-	os.Error
 	Word
-	From() vm_id
+	From() uint32
+	String() string
 }
 
 type Bool bool

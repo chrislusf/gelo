@@ -123,11 +123,11 @@ func (p *api) AlienOrElse(w Word) Alien {
 
 func (p *api) InvokeOrElse(args *List) (ret Word) {
 	if args == nil {
-		SystemError(p.vm, "Invoke* attempted to invoke nothing")
+		return Null
 	}
 	w, c, args := p.vm.peval(args, uint(args.Len()-1))
 	if _, is_defer := w.(defert); is_defer {
-		SystemError(p.vm, "Cannot register a defer via Invoke*")
+		RuntimeError(p.vm, "Cannot register a defer via Invoke*")
 		return
 	}
 	if c != nil {

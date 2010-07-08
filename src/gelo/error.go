@@ -5,14 +5,47 @@ import (
 	"bytes"
 )
 
-func killed(vm *VM) Error {
-	return ErrRuntime{_make_error(vm, []interface{}{"VM killed"})}
+//hopefully one day we also have name, lineno, etc
+type _error struct {
+	from vm_id
+	msg  string
 }
+
+//we do not let _errSystem become a gelo.Error but we do want to piggyback
+//on the formatting. This is an unexported type because this kind of error is
+//used for serious bugs that if allowed to continue would only wreak
+//unimaginable havoc, so we want our SOS to escape even if we have to blow up
+//the host application to do so. Should be caught by anything looking for
+//os.Error and make it to a log if not the console.
+type _errSystem struct {
+	_error
+}
+
+type ErrSyntax struct {
+	_error
+}
+
+type ErrRuntime struct {
+	_error
+}
+
+//Predefined kinds of errors
 
 //note a system error is not a word and should only be called if the impossible
 //to recover from occurs
 func SystemError(vm *VM, s ...interface{}) {
-	panic(ErrSystem(_make_error(vm, s)))
+	panic(_errSystem{_make_errorM(vm, s, `
+If you are reading this, you have discovered a bug in Gelo, a  and not the
+program that you are using.
+Please see if this has been reported at:
+
+	http://code.google.com/p/gelo/issues/list
+
+and if not report the error there, so that we may fix it, before notifying the
+owners of the application that you are using of the error.
+
+Thank you for your time and the Gelo team deeply apologizes for the inconvience.
+`)})
 }
 
 func SyntaxError(s ...interface{}) {
@@ -44,38 +77,27 @@ func ArgumentError(vm *VM, name, spec, args interface{}) {
 	})
 }
 
-
-func _make_errorM(vm *VM, s ...interface{}) _error {
-	return _make_error(vm, s)
+func killed(vm *VM) Error {
+	return ErrRuntime{_make_error(vm, []interface{}{"VM killed"})}
 }
 
-func _make_error(vm *VM, s []interface{}) _error {
-	var id vm_id
-	if vm != nil {
-		id = vm.ProcID()
-	}
-	return _error{id, _format(s)}
-}
+//common methods on error
 
-//hopefully one day we also have name, lineno, etc
-type _error struct {
-	from vm_id
-	msg  string
-}
-
-func (e _error) From() vm_id {
-	return e.from
+func (e _error) From() uint32 {
+	return uint32(e.from)
 }
 
 func (e _error) String() string {
+
 	return e.msg
 }
 
-type ErrSystem _error //not a word
-
-type ErrSyntax struct {
-	_error
+func (e _error) Message() string {
+	return e.msg
 }
+
+
+//syntax errors
 
 func (self ErrSyntax) Type() Symbol {
 	return interns("*SYNTAX-ERROR*")
@@ -98,9 +120,7 @@ func (self ErrSyntax) Copy() Word { return self }
 func (self ErrSyntax) DeepCopy() Word { return self }
 
 
-type ErrRuntime struct {
-	_error
-}
+//Runtime Errors
 
 func (self ErrRuntime) Type() Symbol {
 	return interns("*RUNTIME-ERROR*")
@@ -122,6 +142,34 @@ func (self ErrRuntime) Copy() Word { return self }
 
 func (self ErrRuntime) DeepCopy() Word { return self }
 
+
+//Implementation details
+
+func _make_errorM(vm *VM, s ...interface{}) _error {
+	return _make_error(vm, s)
+}
+
+func _make_error(vm *VM, s []interface{}) _error {
+	var id vm_id
+	if vm != nil {
+		id = vm.ProcID()
+	}
+	return _error{id, _format(s)}
+}
+
+func _format(all ...interface{}) string {
+	return _format_slice(all)
+}
+
+func _format_slice(all []interface{}) string {
+	buf := newBuf(0)
+	buf.Write(_format1(all[0]))
+	for _, v := range all[1:] {
+		buf.WriteString(" ")
+		buf.Write(_format1(v))
+	}
+	return buf.String()
+}
 
 func _format1(item interface{}) (ret []byte) {
 	switch t := item.(type) {
@@ -154,7 +202,8 @@ func _format1(item interface{}) (ret []byte) {
 	case Word:
 		ret = t.Ser().Bytes()
 	case []interface{}:
-		buf := newBuf(0)
+		ret = []byte(_format_slice(t))
+		/*buf := newBuf(0)
 		buf.WriteString("{")
 		if len(t) != 0 {
 			buf.Write(_format1(t[0]))
@@ -164,19 +213,9 @@ func _format1(item interface{}) (ret []byte) {
 			}
 		}
 		buf.WriteString("}")
-		ret = buf.Bytes()
+		ret = buf.Bytes()*/
 	default:
 		ret = []byte(fmt.Sprint(t))
 	}
 	return
-}
-
-func _format(all ...interface{}) string {
-	buf := newBuf(0)
-	buf.Write(_format1(all[0]))
-	for _, v := range all[1:] {
-		buf.WriteString(" ")
-		buf.Write(_format1(v))
-	}
-	return buf.String()
 }
