@@ -102,6 +102,21 @@ func (Ns *namespace_api) _blacklist(s string) {
 	h.blacklist[s] = true
 }
 
+func (Ns *namespace_api) Fork() {
+	vm := Ns.vm
+	vm.cns = newNamespace(vm.cns)
+}
+
+//returns false if we cannot Unfork (ie this is the topmost namespace)
+func (Ns *namespace_api) Unfork() bool {
+	vm := Ns.vm
+	if vm.cns.up == vm.top { //if no parent top = nil
+		return false
+	}
+	vm.cns = vm.cns.up
+	return true
+}
+
 func (Ns *namespace_api) Depth() (count int) {
 	ns := Ns.vm.cns
 	for ; ns != nil; ns = ns.up {
