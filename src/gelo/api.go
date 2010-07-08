@@ -96,6 +96,14 @@ func (p *api) SymbolOrElse(w Word) Symbol {
 	return s
 }
 
+func (p *api) AlienOrElse(w Word) Alien {
+	a, ok := w.(Alien)
+	if !ok {
+		TypeMismatch(p.vm, "alien", w.Type())
+	}
+	return a
+}
+
 /*
  *      Returns the bytes of a symbol or quote.
  * We do not check that the quote is in fact literal as there are many possible
@@ -113,12 +121,35 @@ func (p *api) LiteralOrElse(w Word) []byte {
 	return q.Ser().Bytes()
 }
 
-func (p *api) AlienOrElse(w Word) Alien {
-	a, ok := w.(Alien)
-	if !ok {
-		TypeMismatch(p.vm, "alien", w.Type())
+//If w is a Symbol, dereference and see if it is a code Quote or an Alien, if
+//so return the derefed invokable and true. Otherwise, checks if w is
+//a code Quote or Alien and, if so, return it and true. In all other cases,
+//return (nil, false)
+func (p *api) IsInvokable(w Word) (Word, bool) {
+	if s, ok := w.(Symbol); ok {
+		w, ok = p.vm.Ns.Lookup(s)
+		if !ok {
+			return nil, false
+		}
 	}
-	return a
+	if q, ok := w.(Quote); ok {
+		if _, ok := q.unprotect().fcode(); ok {
+			return w, true
+		}
+		return nil, false
+	}
+	if _, ok := w.(Alien); ok {
+		return w, true
+	}
+	return nil, false
+}
+
+func (p *api) InvokableOrElse(w Word) Word {
+	i, ok := p.IsInvokable(w)
+	if !ok {
+		TypeMismatch(p.vm, "invokable", w.Type())
+	}
+	return i
 }
 
 func (p *api) InvokeOrElse(args *List) (ret Word) {
