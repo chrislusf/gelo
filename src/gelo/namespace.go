@@ -231,6 +231,18 @@ func (Ns *namespace_api) Set(s Symbol, w Word) {
 	Ns.vm.cns.set(s, w)
 }
 
+//It is up to the caller to ensure that the incoming *Dict is not being
+//written to by another goroutine during the run of Inject.
+func (Ns *namespace_api) Inject(d *Dict) {
+	ns := Ns.vm.cns
+	t := ns.dict.rep
+	ns.mux.Lock()
+	defer ns.mux.Unlock()
+	for k, v := range d.rep {
+		t[k] = v
+	}
+}
+
 func (Ns *namespace_api) Del(s Symbol) (Word, bool) {
 	ns, top, str := Ns.vm.cns, Ns.vm.top, s.String()
 	for ; ns != nil; ns = ns.up {
