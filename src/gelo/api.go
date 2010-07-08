@@ -121,6 +121,14 @@ func (p *api) LiteralOrElse(w Word) []byte {
 	return q.Ser().Bytes()
 }
 
+func (p *api) InvokableOrElse(w Word) Word {
+	i, ok := p.IsInvokable(w)
+	if !ok {
+		TypeMismatch(p.vm, "invokable", w.Type())
+	}
+	return i
+}
+
 //If w is a Symbol, dereference and see if it is a code Quote or an Alien, if
 //so return the derefed invokable and true. Otherwise, checks if w is
 //a code Quote or Alien and, if so, return it and true. In all other cases,
@@ -141,18 +149,14 @@ func (p *api) IsInvokable(w Word) (Word, bool) {
 	if _, ok := w.(Alien); ok {
 		return w, true
 	}
+	if _, ok := w.(defert); ok {
+		return w, true
+	}
 	return nil, false
 }
 
-func (p *api) InvokableOrElse(w Word) Word {
-	i, ok := p.IsInvokable(w)
-	if !ok {
-		TypeMismatch(p.vm, "invokable", w.Type())
-	}
-	return i
-}
-
 func (p *api) InvokeOrElse(args *List) (ret Word) {
+	//simulate the Noop, {}
 	if args == nil {
 		return Null
 	}
@@ -188,34 +192,11 @@ func (p *api) Invoke(args *List) (ret Word, err Error) {
 
 //The TailInvoke* family is only to be called when the result is to be
 //returned from the callee.
-func (p *api) TailInvoke(args *List) Word {
-	if args == nil {
-		return Null
-	}
-	vm := p.vm
-	w, c, args := vm.peval(args, uint(args.Len()-1))
-	if _, is_defer := w.(defert); is_defer {
-		RuntimeError(vm, "Cannot register a defer via Invoke*")
-	}
-	if c != nil {
-		if args == nil {
-			//we can tail call--either called with no arguments or the return
-			//from an alien.
-			//TODO, a way to pass arguments back to eval so that we can always
-			//tail call.
-			//Alternately, we could build a quote wrapping the quote . . .
-			return &quote{false, c, nil}
-		} else {
-			return vm.eval(c, args)
-		}
-	}
-	return w
+func (_ *api) TailInvoke(args *List) Word {
+	return build_quote_from_list(args)
 }
 
 func (p *api) InvokeCmd(w Word, args *List) (Word, Error) {
-	if q, ok := w.(Quote); ok {
-		w = q.unprotect()
-	}
 	return p.Invoke(&List{w, args})
 }
 
@@ -227,47 +208,20 @@ func (p *api) TailInvokeCmd(w Word, args *List) Word {
 	return p.TailInvoke(&List{w, args})
 }
 
-func (p *api) InvokeWordOrReturn(w Word) (ret Word) {
-	defer func() {
-		if x := recover(); x != nil {
-			switch t := x.(type) {
-			default:
-				panic(x)
-			case ErrRuntime, ErrSyntax:
-				ret = w
-			}
-		}
-	}()
-	switch w.(type) {
-	case Quote, Alien, Symbol:
-		ret, err := p.Invoke(AsList(w))
-		if err == nil {
-			return ret
-		}
+func (p *api) InvokeWordOrReturn(w Word) (ret Word, err Error) {
+	i, ok := p.IsInvokable(w)
+	if !ok {
+		return w, nil
 	}
-	return w
+	return p.Invoke(AsList(i))
 }
 
 func (p *api) TailInvokeWordOrReturn(w Word) Word {
-	if s, ok := w.(Symbol); ok {
-		dw, there := p.vm.Ns.Lookup(s)
-		if there {
-			w = dw
-		}
+	i, ok := p.IsInvokable(w)
+	if !ok {
+		return w
 	}
-	//manually check if it's code and only unprotect if it is
-	if q, ok := w.(Quote); ok {
-		uq := q.unprotect()
-		if _, ok := uq.fcode(); !ok {
-			return q
-		}
-		w = q
-	}
-	switch w.(type) {
-	case Quote, Alien:
-		return p.TailInvoke(AsList(w))
-	}
-	return w
+	return p.TailInvoke(AsList(i))
 }
 
 //return a list of lists of symbols and quotes, only evaluates $@[]

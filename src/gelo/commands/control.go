@@ -3,7 +3,11 @@ package commands
 import "gelo"
 
 func _condition(vm *gelo.VM, w gelo.Word) bool {
-	return vm.API.BoolOrElse(vm.API.InvokeWordOrReturn(w)).True()
+	r, e := vm.API.InvokeWordOrReturn(w)
+	if e != nil {
+		panic(e)
+	}
+	return vm.API.BoolOrElse(r).True()
 }
 
 var _if_parser = MakeOrElseArgParser(

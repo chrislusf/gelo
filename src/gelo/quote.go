@@ -15,6 +15,30 @@ func NewQuoteFromGo(t []byte) Quote {
 	return &protected_quote{&quote{false, nil, dup(t)}}
 }
 
+//This is a black magic function
+func build_quote_from_list(args *List) *quote {
+	if args == nil {
+		return Noop.unprotect()
+	}
+	src := newBuf(0)
+	var chead, ctail *sNode
+	for ; args != nil; args = args.Next {
+		src.Write(args.Value.Ser().Bytes())
+		src.WriteString(" ")
+		if chead != nil {
+			//this is safe because when the vm rewrites it will
+			//just blindly fill literals, so it doesn't matter what
+			//the actual type is
+			ctail.next = &sNode{synLiteral, args.Value, nil}
+			ctail = ctail.next
+		} else {
+			chead = &sNode{synLiteral, args.Value, nil}
+			ctail = chead
+		}
+	}
+	return &quote{false, &command{chead, nil}, src.Bytes()}
+}
+
 //we ONLY call this in very specific situations where we KNOW the quote does not
 //parse and want the syntax error for error reporting
 func force_synerr(vm *VM, q Quote) (ret ErrSyntax) {

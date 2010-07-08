@@ -30,27 +30,9 @@ func BI_eval(vm *VM, args *List, ac uint) (ret Word) {
 func _spawn(vm *VM, args *List) (*VM, *List) {
 	head, tail := args.Value, args.Next
 	if _, ok := head.(Quote); !ok {
-		//otherwise we have to rebuild a quote for the spawned vm to exec
-		src := newBuf(0)
-		var chead, ctail *sNode
-		for ; args != nil; args = args.Next {
-			src.Write(args.Value.Ser().Bytes())
-			src.WriteString(" ")
-			if chead != nil {
-				//this is safe because when the vm rewrites it will
-				//just blindly fill literals, so it doesn't matter what
-				//the actual type is
-				ctail.next = &sNode{synLiteral, args.Value, nil}
-				ctail = ctail.next
-			} else {
-				chead = &sNode{synLiteral, args.Value, nil}
-				ctail = chead
-			}
-		}
-		head = &quote{false, &command{chead, nil}, src.Bytes()}
-		tail = EmptyList
+		//if not a quote we conjure one around the args using dark powers
+		head, tail = build_quote_from_list(args), EmptyList
 	}
-
 	spawned := vm.Spawn()
 	if err := spawned.SetProgram(head.(Quote).unprotect()); err != nil {
 		spawned.Destroy()
