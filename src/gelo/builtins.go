@@ -104,9 +104,8 @@ func BI_setx(vm *VM, args *List, ac uint) Word {
 	if ac != 2 {
 		ArgumentError(vm, "set!", "symbol value", args)
 	}
-	toset := args.Value.Ser()
 	val := args.Next.Value
-	vm.Ns.Set(toset, val)
+	vm.Ns.Set(args.Value, val)
 	return val
 }
 

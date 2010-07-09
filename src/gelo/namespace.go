@@ -66,6 +66,7 @@ func (ns *namespace) del(k Word) {
 	ns.dict.Del(k)
 }
 
+//used to implement the (*VM).Read* family
 func (ns *namespace) copyOut(s string) (w Word, ok bool) {
 	for ; ns != nil; ns = ns.up {
 		ns.mux.RLock()
@@ -92,14 +93,6 @@ func (Ns *namespace_api) _is_blacklisted(s string) bool {
 		return false
 	}
 	return h.blacklist[s]
-}
-
-func (Ns *namespace_api) _blacklist(s string) {
-	h := Ns.vm.heritage
-	if h.blacklist == nil {
-		h.blacklist = make(map[string]bool)
-	}
-	h.blacklist[s] = true
 }
 
 func (Ns *namespace_api) Fork(n *namespace) {
@@ -316,7 +309,12 @@ func (Ns *namespace_api) Del(name Word) (Word, bool) {
 				ns.mux.RLock()
 				if v, ok := ns.dict.StrGet(str); ok {
 					ns.mux.RUnlock()
-					Ns._blacklist(str)
+					//blacklist
+					h := Ns.vm.heritage
+					if h.blacklist == nil {
+						h.blacklist = make(map[string]bool)
+					}
+					h.blacklist[s] = true
 					return v, true
 				}
 				ns.mux.RUnlock()

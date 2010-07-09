@@ -214,17 +214,6 @@ func _format1(item interface{}) (ret []byte) {
 		ret = t.Ser().Bytes()
 	case []interface{}:
 		ret = []byte(_format_slice(t))
-		/*buf := newBuf(0)
-		buf.WriteString("{")
-		if len(t) != 0 {
-			buf.Write(_format1(t[0]))
-			for _, v := range t[1:] {
-				buf.WriteString(" ")
-				buf.Write(_format1(v))
-			}
-		}
-		buf.WriteString("}")
-		ret = buf.Bytes()*/
 	default:
 		ret = []byte(fmt.Sprint(t))
 	}
