@@ -246,8 +246,37 @@ func (Ns *namespace_api) Set(s Symbol, w Word) {
 	Ns.vm.cns.set(s, w)
 }
 
+func _nthlvl(lvl int, Ns *namespace_api) (*namespace, bool) {
+	ns, top := Ns.vm.cns, Ns.vm.top
+	if lvl == 0 {
+		return ns, true
+	}
+	for count := 0; ns.up != top; ns = ns.up {
+		count++
+		if count == lvl {
+			return ns, true
+		}
+	}
+	//reached top, but count != lvl
+	if lvl < 0 {
+		return ns, true
+	}
+	return nil, false
+}
+
+//returns false if lvl does not exist or we do not have write access
+//if lvl is less than 0, write to the topmost namespace
+func (Ns *namespace_api) NSet(lvl int, s Symbol, w Word) bool {
+	ns, ok := _nthlvl(lvl, Ns)
+	if !ok {
+		return false
+	}
+	ns.set(s, w)
+	return true
+}
+
 //It is up to the caller to ensure that the incoming *Dict is not being
-//written to by another goroutine during the run of Inject.
+//written to by another goroutine during the run of Inject. Does no copying.
 func (Ns *namespace_api) Inject(d *Dict) {
 	ns := Ns.vm.cns
 	t := ns.dict.rep

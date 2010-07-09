@@ -3,6 +3,9 @@ package commands
 import "gelo"
 
 func Die(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
+	if ac == 0 {
+		args = gelo.AsList(gelo.StrToSym("die"))
+	}
 	gelo.RuntimeError(vm, args)
 	return gelo.Null //Issue 65
 }
