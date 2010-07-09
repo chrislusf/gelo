@@ -327,9 +327,9 @@ func Every(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 		gelo.TypeMismatch(vm, "invokable", cmd.Type())
 	}
 	_, named := Args["item"]
-	var name gelo.Symbol
+	var name gelo.Word
 	if named {
-		name = vm.API.SymbolOrElse(Args["name"])
+		name = Args["name"]
 		if d, there := vm.Ns.DepthOf(name); there && d == 0 {
 			old := vm.Ns.LookupOrElse(name)
 			defer vm.Ns.Set(name, old)
@@ -351,7 +351,7 @@ func Some(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 	Args := _some_parser(vm, args)
 	list := vm.API.ListOrElse(Args["list"])
 	_, named := Args["item"]
-	var name gelo.Symbol
+	var name gelo.Word
 	if named {
 		name = vm.API.SymbolOrElse(Args["name"])
 		if d, there := vm.Ns.DepthOf(name); there && d == 0 {
@@ -396,10 +396,9 @@ func Reduce(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 		gelo.TypeMismatch(vm, "invokable", cmd.Type())
 	}
 	_, named := Args["items"]
-	var left, right gelo.Symbol
+	var left, right gelo.Word
 	if named {
-		left = vm.API.SymbolOrElse(Args["x"])
-		right = vm.API.SymbolOrElse(Args["y"])
+		left, right = Args["x"], Args["y"]
 		if d, there := vm.Ns.DepthOf(left); there && d == 0 {
 			old := vm.Ns.LookupOrElse(left)
 			defer vm.Ns.Set(left, old)

@@ -24,7 +24,7 @@ func Incrx(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 	if ac != 1 {
 		gelo.ArgumentError(vm, "incr!", "reference to number", args)
 	}
-	n, ok := vm.Ns.MutateBy(args.Value.Ser(),
+	n, ok := vm.Ns.MutateBy(args.Value,
 		func(w gelo.Word) (gelo.Word, bool) {
 			n := vm.API.NumberOrElse(w)
 			return gelo.NewNumber(n.Real() + 1), true
@@ -39,7 +39,7 @@ func Decrx(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 	if ac != 1 {
 		gelo.ArgumentError(vm, "decr!", "reference to number", args)
 	}
-	n, ok := vm.Ns.MutateBy(args.Value.Ser(),
+	n, ok := vm.Ns.MutateBy(args.Value,
 		func(w gelo.Word) (gelo.Word, bool) {
 			n := vm.API.NumberOrElse(w)
 			return gelo.NewNumber(n.Real() - 1), true
