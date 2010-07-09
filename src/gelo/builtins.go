@@ -92,23 +92,11 @@ func BI_go(vm *VM, args *List, ac uint) Word {
 
 var BI_defer = defert{}
 
-//Allows creation of code at runtime
-func BI_Quote(vm *VM, args *List, ac uint) Word {
-	if ac == 0 {
-		return Noop
-	}
-	if ac != 1 {
-		ArgumentError(vm, "Quote", "source-string?", args)
-	}
-	return NewQuoteFrom(args.Value)
-}
-
 var EvaluationCommands = map[string]interface{}{
 	"defer":     BI_defer,
 	"eval":      BI_eval,
 	"safe-eval": BI_safe_eval,
 	"go":        BI_go,
-	"Quote":     BI_Quote,
 }
 
 //Commands for variable manipulation

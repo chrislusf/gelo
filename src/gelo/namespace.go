@@ -102,19 +102,25 @@ func (Ns *namespace_api) _blacklist(s string) {
 	h.blacklist[s] = true
 }
 
-func (Ns *namespace_api) Fork() {
+func (Ns *namespace_api) Fork(n *namespace) {
 	vm := Ns.vm
-	vm.cns = newNamespace(vm.cns)
+	if n == nil {
+		vm.cns = newNamespace(vm.cns)
+	} else {
+		n.up = vm.cns
+		vm.cns = n
+	}
 }
 
 //returns false if we cannot Unfork (ie this is the topmost namespace)
-func (Ns *namespace_api) Unfork() bool {
+func (Ns *namespace_api) Unfork() (*namespace, bool) {
 	vm := Ns.vm
 	if vm.cns.up == vm.top { //if no parent top = nil
-		return false
+		return nil, false
 	}
-	vm.cns = vm.cns.up
-	return true
+	out := vm.cns
+	vm.cns = out.up
+	return out, true
 }
 
 func (Ns *namespace_api) Depth() (count int) {
@@ -246,7 +252,7 @@ func (Ns *namespace_api) Set(k, v Word) {
 	Ns.vm.cns.set(k, v)
 }
 
-func _nthlvl(lvl int, Ns *namespace_api) (*namespace, bool) {
+func (Ns *namespace_api) _nthlvl(lvl int) (*namespace, bool) {
 	ns, top := Ns.vm.cns, Ns.vm.top
 	if lvl == 0 {
 		return ns, true
@@ -267,7 +273,7 @@ func _nthlvl(lvl int, Ns *namespace_api) (*namespace, bool) {
 //returns false if lvl does not exist or we do not have write access
 //if lvl is less than 0, write to the topmost namespace
 func (Ns *namespace_api) NSet(lvl int, k, v Word) bool {
-	ns, ok := _nthlvl(lvl, Ns)
+	ns, ok := Ns._nthlvl(lvl)
 	if !ok {
 		return false
 	}
@@ -285,6 +291,20 @@ func (Ns *namespace_api) Inject(d *Dict) {
 	for k, v := range d.rep {
 		t[k] = v
 	}
+}
+
+func (Ns *namespace_api) NInject(lvl int, d *Dict) bool {
+	ns, ok := Ns._nthlvl(lvl)
+	if !ok {
+		return false
+	}
+	t := ns.dict.rep
+	ns.mux.Lock()
+	defer ns.mux.Unlock()
+	for k, v := range d.rep {
+		t[k] = v
+	}
+	return true
 }
 
 func (Ns *namespace_api) Del(name Word) (Word, bool) {
@@ -330,14 +350,14 @@ func (Ns *namespace_api) MutateBy(name Word, f func(Word) (Word, bool)) (Word, b
 		if ns != top && !above {
 			below = ns
 		} else if ns == top {
+			if Ns._is_blacklisted(str) {
+				return nil, false
+			}
 			above = true
 			//we are going to write to it soon and don't want anyone screwing
 			//it up before we find the original s
 			below.mux.Lock()
 			defer below.mux.Unlock()
-			if Ns._is_blacklisted(str) {
-				return nil, false
-			}
 		}
 		ns.mux.RLock()
 		if w, ok := ns.dict.StrGet(str); ok {
@@ -369,12 +389,12 @@ func (Ns *namespace_api) Mutate(name, w Word) bool {
 		if ns != top && !above {
 			below = ns
 		} else if ns == top {
-			above = true
-			below.mux.Lock()
-			defer below.mux.Unlock()
 			if Ns._is_blacklisted(str) {
 				return false
 			}
+			above = true
+			below.mux.Lock()
+			defer below.mux.Unlock()
 		}
 		ns.mux.RLock()
 		if old, ok := ns.dict.StrGet(str); ok {

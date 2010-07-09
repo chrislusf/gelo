@@ -42,9 +42,20 @@ func Partial_eval(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 	return lists
 }
 
+func Quote(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
+	if ac == 0 {
+		return gelo.Noop
+	}
+	if ac == 1 {
+		return gelo.NewQuoteFrom(args.Value)
+	}
+	return gelo.NewQuoteFrom(args.Value.Ser())
+}
+
 var MiscCommands = map[string]interface{}{
 	"halt":         Halt,
 	"id":           Id,
 	"value":        Value,
 	"partial-eval": Partial_eval,
+	"Quote":        Quote,
 }
