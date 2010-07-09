@@ -221,10 +221,13 @@ func (Ns *namespace_api) LookupOrElse(name Word) Word {
 	return w
 }
 
-func (Ns *namespace_api) _nthlvl(lvl int) (*namespace, bool) {
+func (Ns *namespace_api) _nthlvl(lvl int, safe bool) (*namespace, bool) {
 	ns, top := Ns.vm.cns, Ns.vm.top
 	if lvl == 0 {
 		return ns, true
+	}
+	if safe {
+		top = nil
 	}
 	for count := 0; ns.up != top; ns = ns.up {
 		count++
@@ -241,7 +244,7 @@ func (Ns *namespace_api) _nthlvl(lvl int) (*namespace, bool) {
 
 //returns false if lvl is fails or if key is not found at lvl
 func (Ns *namespace_api) Get(lvl int, k Word) (Word, bool) {
-	ns, ok := Ns._nthlvl(lvl)
+	ns, ok := Ns._nthlvl(lvl, true)
 	if !ok {
 		return nil, false
 	}
@@ -251,7 +254,7 @@ func (Ns *namespace_api) Get(lvl int, k Word) (Word, bool) {
 //returns false if lvl does not exist or we do not have write access
 //if lvl is less than 0, write to the topmost namespace
 func (Ns *namespace_api) Set(lvl int, k, v Word) bool {
-	ns, ok := Ns._nthlvl(lvl)
+	ns, ok := Ns._nthlvl(lvl, false)
 	if !ok {
 		return false
 	}
@@ -262,7 +265,7 @@ func (Ns *namespace_api) Set(lvl int, k, v Word) bool {
 //It is up to the caller to ensure that the incoming *Dict is not being
 //written to by another goroutine during the run of Inject. Does no copying.
 func (Ns *namespace_api) Inject(lvl int, d *Dict) bool {
-	ns, ok := Ns._nthlvl(lvl)
+	ns, ok := Ns._nthlvl(lvl, false)
 	if !ok {
 		return false
 	}
