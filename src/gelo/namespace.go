@@ -48,22 +48,22 @@ func newNamespaceFrom(parent *namespace, dict *Dict) *namespace {
 	return &namespace{parent, dict, &_urw_mutex{}}
 }
 
-func (ns *namespace) get(s Symbol) (Word, bool) {
+func (ns *namespace) get(k Word) (Word, bool) {
 	ns.mux.RLock()
 	defer ns.mux.RUnlock()
-	return ns.dict.Get(s)
+	return ns.dict.Get(k)
 }
 
-func (ns *namespace) set(s Symbol, w Word) {
+func (ns *namespace) set(k, v Word) {
 	ns.mux.Lock()
 	defer ns.mux.Unlock()
-	ns.dict.Set(s, w)
+	ns.dict.Set(k, v)
 }
 
-func (ns *namespace) del(s Symbol) {
+func (ns *namespace) del(k Word) {
 	ns.mux.Lock()
 	defer ns.mux.Unlock()
-	ns.dict.Del(s)
+	ns.dict.Del(k)
 }
 
 func (ns *namespace) copyOut(s string) (w Word, ok bool) {
@@ -134,8 +134,8 @@ func (Ns *namespace_api) LocalDepth() (count int) {
 	return
 }
 
-func (Ns *namespace_api) DepthOf(s Symbol) (count int, there bool) {
-	ns, top, str := Ns.vm.cns, Ns.vm.top, s.String()
+func (Ns *namespace_api) DepthOf(name Word) (count int, there bool) {
+	ns, top, str := Ns.vm.cns, Ns.vm.top, stringof(name.Ser())
 	for ; ns != nil; ns = ns.up {
 		if ns == top && Ns._is_blacklisted(str) {
 			return
@@ -153,8 +153,8 @@ func (Ns *namespace_api) DepthOf(s Symbol) (count int, there bool) {
 	return
 }
 
-func (Ns *namespace_api) Has(s Symbol) bool {
-	ns, top, str := Ns.vm.cns, Ns.vm.top, s.String()
+func (Ns *namespace_api) Has(name Word) bool {
+	ns, top, str := Ns.vm.cns, Ns.vm.top, stringof(name.Ser())
 	for ; ns != nil; ns = ns.up {
 		if ns == top && Ns._is_blacklisted(str) {
 			return false
@@ -207,9 +207,9 @@ func (Ns *namespace_api) Locals(lvls int) *Dict {
 	return &Dict{rep: m}
 }
 
-func (Ns *namespace_api) Lookup(s Symbol) (w Word, ok bool) {
+func (Ns *namespace_api) Lookup(name Word) (w Word, ok bool) {
 	var above bool
-	ns, top, str := Ns.vm.cns, Ns.vm.top, s.String()
+	ns, top, str := Ns.vm.cns, Ns.vm.top, stringof(name.Ser())
 	for ; ns != nil; ns = ns.up {
 		if ns == top {
 			above = true
@@ -230,20 +230,20 @@ func (Ns *namespace_api) Lookup(s Symbol) (w Word, ok bool) {
 	return nil, false
 }
 
-func (Ns *namespace_api) LookupOrElse(s Symbol) Word {
-	w, ok := Ns.Lookup(s)
+func (Ns *namespace_api) LookupOrElse(name Word) Word {
+	w, ok := Ns.Lookup(name)
 	if !ok {
-		VariableUndefined(Ns.vm, s)
+		VariableUndefined(Ns.vm, name)
 	}
 	return w
 }
 
-func (Ns *namespace_api) Get(s Symbol) (Word, bool) {
-	return Ns.vm.cns.get(s)
+func (Ns *namespace_api) Get(k Word) (Word, bool) {
+	return Ns.vm.cns.get(k)
 }
 
-func (Ns *namespace_api) Set(s Symbol, w Word) {
-	Ns.vm.cns.set(s, w)
+func (Ns *namespace_api) Set(k, v Word) {
+	Ns.vm.cns.set(k, v)
 }
 
 func _nthlvl(lvl int, Ns *namespace_api) (*namespace, bool) {
@@ -266,12 +266,12 @@ func _nthlvl(lvl int, Ns *namespace_api) (*namespace, bool) {
 
 //returns false if lvl does not exist or we do not have write access
 //if lvl is less than 0, write to the topmost namespace
-func (Ns *namespace_api) NSet(lvl int, s Symbol, w Word) bool {
+func (Ns *namespace_api) NSet(lvl int, k, v Word) bool {
 	ns, ok := _nthlvl(lvl, Ns)
 	if !ok {
 		return false
 	}
-	ns.set(s, w)
+	ns.set(k, v)
 	return true
 }
 
@@ -287,8 +287,8 @@ func (Ns *namespace_api) Inject(d *Dict) {
 	}
 }
 
-func (Ns *namespace_api) Del(s Symbol) (Word, bool) {
-	ns, top, str := Ns.vm.cns, Ns.vm.top, s.String()
+func (Ns *namespace_api) Del(name Word) (Word, bool) {
+	ns, top, str := Ns.vm.cns, Ns.vm.top, stringof(name.Ser())
 	for ; ns != nil; ns = ns.up {
 		if ns == top {
 			//we do not blacklist unless it's already there
@@ -322,8 +322,8 @@ func (Ns *namespace_api) Del(s Symbol) (Word, bool) {
  * attempts to access any of the locked namespaces, safest to not touch
  * any namespaces in the processes.
  */
-func (Ns *namespace_api) MutateBy(s Symbol, f func(Word) (Word, bool)) (Word, bool) {
-	ns, top, str := Ns.vm.cns, Ns.vm.top, s.String()
+func (Ns *namespace_api) MutateBy(name Word, f func(Word) (Word, bool)) (Word, bool) {
+	ns, top, str := Ns.vm.cns, Ns.vm.top, stringof(name.Ser())
 	var below *namespace
 	above := false
 	for ; ns != nil; ns = ns.up {
@@ -361,8 +361,8 @@ func (Ns *namespace_api) MutateBy(s Symbol, f func(Word) (Word, bool)) (Word, bo
 
 // Change value of s to w in original ns of s, or least deep ns if s is not
 // owned by invoking VM.
-func (Ns *namespace_api) Mutate(s Symbol, w Word) bool {
-	ns, top, str := Ns.vm.cns, Ns.vm.top, s.String()
+func (Ns *namespace_api) Mutate(name, w Word) bool {
+	ns, top, str := Ns.vm.cns, Ns.vm.top, stringof(name.Ser())
 	var below *namespace
 	above := false
 	for ; ns != nil; ns = ns.up {
@@ -394,11 +394,12 @@ func (Ns *namespace_api) Mutate(s Symbol, w Word) bool {
 	return false
 }
 
-func (Ns *namespace_api) Swap(s1, s2 Symbol) (w1, w2 Word, ok bool) {
+func (Ns *namespace_api) Swap(n1, n2 Word) (w1, w2 Word, ok bool) {
 	//This operation becomes convoluted with this locking protocol
 	//but it only has to be implemented once here and is relatively uncommon
 	//operation
-	ns, top, str1, str2 := Ns.vm.cns, Ns.vm.top, s1.String(), s2.String()
+	ns, top := Ns.vm.cns, Ns.vm.top
+	str1, str2 := stringof(n1.Ser()), stringof(n2.Ser())
 	//lset and rset are only true in the iteration that they're found
 	above, lset, rset := false, false, false
 	var left, right, below *namespace

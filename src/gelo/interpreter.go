@@ -20,7 +20,7 @@ func (vm *VM) _deref(item *sNode) (ret Word) {
 		SystemError(vm, "invalid node type dereferenced--parser incorrect",
 			item)
 	}
-	ret = vm.Ns.LookupOrElse(ret.(Symbol))
+	ret = vm.Ns.LookupOrElse(ret)
 	run_trace("derefed", item, "=>", ret)
 	return
 }
@@ -79,7 +79,7 @@ func (vm *VM) peval(line *List, ac uint) (ret Word, c *command, args *List) {
 		//Not a quote or alien, we attempt to dereference the serialization
 		//of the command and had better get a quote or alien (or defer)
 		run_trace("evaluating named command", ret)
-		switch cmd := vm.Ns.LookupOrElse(ret.Ser()).(type) {
+		switch cmd := vm.Ns.LookupOrElse(ret).(type) {
 		default:
 			TypeMismatch(vm, "invokable", ret.Type())
 		case Quote:

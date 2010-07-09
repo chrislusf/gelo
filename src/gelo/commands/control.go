@@ -87,8 +87,7 @@ func Case_of(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 
 	//Give val a name, specified by var, in clauses of the cases block
 	//XXX This disallows us from making tail calls
-	if var_name, there := Args["var"]; there {
-		name := vm.API.SymbolOrElse(var_name)
+	if name, there := Args["var"]; there {
 		if d, there := vm.Ns.DepthOf(name); there && d == 0 {
 			defer vm.Ns.Set(name, vm.Ns.LookupOrElse(name))
 		} else {

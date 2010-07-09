@@ -112,8 +112,8 @@ func (d *Dict) Map() map[string]Word {
 func (d *Dict) Len() int { return len(d.rep) }
 
 //these methods sidestep the hashing restrictions on Go maps
-func (d *Dict) Get(s Symbol) (w Word, ok bool) {
-	return d.StrGet(s.String())
+func (d *Dict) Get(name Word) (w Word, ok bool) {
+	return d.StrGet(stringof(name.Ser()))
 }
 
 func (d *Dict) StrGet(s string) (w Word, ok bool) {
@@ -124,8 +124,8 @@ func (d *Dict) StrGet(s string) (w Word, ok bool) {
 	return
 }
 
-func (d *Dict) Set(s Symbol, w Word) {
-	d.StrSet(s.String(), w)
+func (d *Dict) Set(name, value Word) {
+	d.StrSet(stringof(name.Ser()), value)
 }
 
 func (d *Dict) StrSet(s string, w Word) {
@@ -133,8 +133,8 @@ func (d *Dict) StrSet(s string, w Word) {
 	d.rep[s] = w
 }
 
-func (d *Dict) Has(s Symbol) bool {
-	return d.StrHas(s.String())
+func (d *Dict) Has(name Word) bool {
+	return d.StrHas(stringof(name.Ser()))
 }
 
 func (d *Dict) StrHas(s string) bool {
@@ -142,8 +142,8 @@ func (d *Dict) StrHas(s string) bool {
 	return ok
 }
 
-func (d *Dict) Del(s Symbol) {
-	d.StrDel(s.String())
+func (d *Dict) Del(name Word) {
+	d.StrDel(stringof(name.Ser()))
 }
 
 func (d *Dict) StrDel(s string) {

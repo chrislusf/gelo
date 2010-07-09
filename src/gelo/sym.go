@@ -38,6 +38,18 @@ func intern(s []byte) Symbol {
 
 func interns(s string) Symbol { return intern([]byte(s)) }
 
+//noncopying for internal use when we absolutely know that it will not end
+//in horror
+func bytesof(s Symbol) []byte {
+	if s.interned() {
+		return []byte(s.(_iSymbol))
+	}
+	return []byte(s.(_dSymbol))
+}
+
+func stringof(s Symbol) string {
+	return string(bytesof(s))
+}
 
 //dynamic, ie not interned, symbols
 type _dSymbol []byte
