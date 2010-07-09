@@ -89,11 +89,11 @@ func Case_of(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 	//XXX This disallows us from making tail calls
 	if name, there := Args["var"]; there {
 		if d, there := vm.Ns.DepthOf(name); there && d == 0 {
-			defer vm.Ns.Set(name, vm.Ns.LookupOrElse(name))
+			defer vm.Ns.Set(0, name, vm.Ns.LookupOrElse(name))
 		} else {
 			defer vm.Ns.Del(name)
 		}
-		vm.Ns.Set(name, key)
+		vm.Ns.Set(0, name, key)
 	}
 
 	//run val through cmd before comparing

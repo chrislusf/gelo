@@ -332,14 +332,14 @@ func Every(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 		name = Args["name"]
 		if d, there := vm.Ns.DepthOf(name); there && d == 0 {
 			old := vm.Ns.LookupOrElse(name)
-			defer vm.Ns.Set(name, old)
+			defer vm.Ns.Set(0, name, old)
 		} else if list != nil {
 			defer vm.Ns.Del(name)
 		}
 	}
 	return list.Map(func(w gelo.Word) gelo.Word {
 		if named {
-			vm.Ns.Set(name, w)
+			vm.Ns.Set(0, name, w)
 		}
 		return vm.API.InvokeCmdOrElse(cmd, gelo.NewList(w))
 	})
@@ -356,7 +356,7 @@ func Some(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 		name = vm.API.SymbolOrElse(Args["name"])
 		if d, there := vm.Ns.DepthOf(name); there && d == 0 {
 			old := vm.Ns.LookupOrElse(name)
-			defer vm.Ns.Set(name, old)
+			defer vm.Ns.Set(0, name, old)
 		} else if list != nil {
 			defer vm.Ns.Del(name)
 		}
@@ -369,7 +369,7 @@ func Some(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 	for ; list != nil; list = list.Next {
 		v := list.Value
 		if named {
-			vm.Ns.Set(name, v)
+			vm.Ns.Set(0, name, v)
 		}
 		val := vm.API.InvokeCmdOrElse(cmd, gelo.NewList(v))
 		if b, ok := val.(gelo.Bool); ok && b.True() {
@@ -401,13 +401,13 @@ func Reduce(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 		left, right = Args["x"], Args["y"]
 		if d, there := vm.Ns.DepthOf(left); there && d == 0 {
 			old := vm.Ns.LookupOrElse(left)
-			defer vm.Ns.Set(left, old)
+			defer vm.Ns.Set(0, left, old)
 		} else if list != nil {
 			defer vm.Ns.Del(left)
 		}
 		if d, there := vm.Ns.DepthOf(right); there && d == 0 {
 			old := vm.Ns.LookupOrElse(right)
-			defer vm.Ns.Set(right, old)
+			defer vm.Ns.Set(0, right, old)
 		} else if list != nil {
 			defer vm.Ns.Del(right)
 		}
@@ -423,8 +423,8 @@ func Reduce(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 	for ; list != nil; list = list.Next {
 		v := list.Value
 		if named {
-			vm.Ns.Set(left, acc)
-			vm.Ns.Set(right, v)
+			vm.Ns.Set(0, left, acc)
+			vm.Ns.Set(0, right, v)
 		}
 		acc = vm.API.InvokeCmdOrElse(cmd, gelo.NewList(acc, v))
 	}

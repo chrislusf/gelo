@@ -105,7 +105,7 @@ func BI_setx(vm *VM, args *List, ac uint) Word {
 		ArgumentError(vm, "set!", "symbol value", args)
 	}
 	val := args.Next.Value
-	vm.Ns.Set(args.Value, val)
+	vm.Ns.Set(0, args.Value, val)
 	return val
 }
 
@@ -126,7 +126,8 @@ func BI_setp(vm *VM, args *List, ac uint) Word {
 		ArgumentError(vm, "set?", "symbol+", args)
 	}
 	return args.MapOrApply(func(w Word) Word {
-		return ToBool(vm.Ns.Has(w.Ser()))
+		_, ok := vm.Ns.Lookup(w)
+		return ToBool(ok)
 	})
 }
 
@@ -152,7 +153,8 @@ func BI_swapx(vm *VM, args *List, ac uint) Word {
 	sndw, _, ok := vm.Ns.Swap(fst, snd) //don't need fstw
 	if !ok {
 		//we've lost our locks so this may produce nonsense
-		fstb, sndb := vm.Ns.Has(fst), vm.Ns.Has(snd)
+		_, fstb := vm.Ns.Lookup(fst)
+		_, sndb := vm.Ns.Lookup(snd)
 		if fstb && sndb {
 			RuntimeError(vm, "Neither", fst, "nor", snd, "are defined")
 		}

@@ -152,22 +152,6 @@ func (Ns *namespace_api) DepthOf(name Word) (count int, there bool) {
 	return
 }
 
-func (Ns *namespace_api) Has(name Word) bool {
-	ns, top, str := Ns.vm.cns, Ns.vm.top, stringof(name.Ser())
-	for ; ns != nil; ns = ns.up {
-		if ns == top && Ns._is_blacklisted(str) {
-			return false
-		}
-		ns.mux.RLock()
-		if ns.dict.StrHas(str) {
-			ns.mux.RUnlock()
-			return true
-		}
-		ns.mux.RUnlock()
-	}
-	return false
-}
-
 // lvls = 0 => only the current namespace
 // lvls = n => first 1 + min(n, Depth()) namespaces
 // lvls < 0 => capture Depth() namespaces
@@ -237,14 +221,6 @@ func (Ns *namespace_api) LookupOrElse(name Word) Word {
 	return w
 }
 
-func (Ns *namespace_api) Get(k Word) (Word, bool) {
-	return Ns.vm.cns.get(k)
-}
-
-func (Ns *namespace_api) Set(k, v Word) {
-	Ns.vm.cns.set(k, v)
-}
-
 func (Ns *namespace_api) _nthlvl(lvl int) (*namespace, bool) {
 	ns, top := Ns.vm.cns, Ns.vm.top
 	if lvl == 0 {
@@ -263,9 +239,18 @@ func (Ns *namespace_api) _nthlvl(lvl int) (*namespace, bool) {
 	return nil, false
 }
 
+//returns false if lvl is fails or if key is not found at lvl
+func (Ns *namespace_api) Get(lvl int, k Word) (Word, bool) {
+	ns, ok := Ns._nthlvl(lvl)
+	if !ok {
+		return nil, false
+	}
+	return ns.get(k)
+}
+
 //returns false if lvl does not exist or we do not have write access
 //if lvl is less than 0, write to the topmost namespace
-func (Ns *namespace_api) NSet(lvl int, k, v Word) bool {
+func (Ns *namespace_api) Set(lvl int, k, v Word) bool {
 	ns, ok := Ns._nthlvl(lvl)
 	if !ok {
 		return false
@@ -276,17 +261,7 @@ func (Ns *namespace_api) NSet(lvl int, k, v Word) bool {
 
 //It is up to the caller to ensure that the incoming *Dict is not being
 //written to by another goroutine during the run of Inject. Does no copying.
-func (Ns *namespace_api) Inject(d *Dict) {
-	ns := Ns.vm.cns
-	t := ns.dict.rep
-	ns.mux.Lock()
-	defer ns.mux.Unlock()
-	for k, v := range d.rep {
-		t[k] = v
-	}
-}
-
-func (Ns *namespace_api) NInject(lvl int, d *Dict) bool {
+func (Ns *namespace_api) Inject(lvl int, d *Dict) bool {
 	ns, ok := Ns._nthlvl(lvl)
 	if !ok {
 		return false
@@ -314,7 +289,7 @@ func (Ns *namespace_api) Del(name Word) (Word, bool) {
 					if h.blacklist == nil {
 						h.blacklist = make(map[string]bool)
 					}
-					h.blacklist[s] = true
+					h.blacklist[str] = true
 					return v, true
 				}
 				ns.mux.RUnlock()
