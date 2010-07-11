@@ -1,9 +1,6 @@
 package gelo
 
-import (
-	"io"
-	"sync"
-)
+import "sync"
 
 const VERSION = "0.1.0 alpha"
 
@@ -406,7 +403,7 @@ func (vm *VM) GetProgram() Quote {
 }
 
 //Never call from a goroutine that doesn't own the VM
-func (vm *VM) ParseProgram(in io.Reader) (err Error) {
+func (vm *VM) ParseProgram(in reader) (err Error) {
 	vm._sanity("parse and set a new program")
 	vm.mux.Lock()
 	defer vm.mux.Unlock()
@@ -523,7 +520,7 @@ func (vm *VM) Exec(args interface{}) (ret Word, err Error) {
 
 //same as ParseProgram followed by Exec
 //Never call from a goroutine that doesn't own the VM
-func (vm *VM) Run(in io.Reader, args interface{}) (ret Word, err Error) {
+func (vm *VM) Run(in reader, args interface{}) (ret Word, err Error) {
 	if err = vm.ParseProgram(in); err != nil {
 		return
 	}

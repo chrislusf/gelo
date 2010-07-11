@@ -1,7 +1,5 @@
 package gelo
 
-import "io"
-
 type _ast byte
 
 const (
@@ -57,7 +55,7 @@ type _parser struct {
 	escm   _esc_mode
 	ch     _lexeme
 	cur    []byte
-	src    io.Reader
+	src    reader
 	buf    *buffer
 }
 
@@ -375,7 +373,7 @@ func (p *_parser) _parse_line(clause bool) *sNode {
 	panic("parse line in impossible state") //Issue 65
 }
 
-func parse(in io.Reader) *command {
+func parse(in reader) *command {
 	var head, tail *command
 	var n *sNode
 	p := new(_parser)

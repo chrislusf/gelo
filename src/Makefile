@@ -14,4 +14,5 @@ nuke:
 	rm -f *.8 run
 	cd tools; make nuke
 	cd gelo; make nuke
+	cd gelo/extensions; make nuke
 	cd gelo/commands; make nuke

@@ -2,16 +2,19 @@ package gelo
 
 import (
 	"bytes"
-	"io"
 	"os"
 )
 
-type _recordingReader struct {
-	buf *bytes.Buffer
-	src io.Reader
+type reader interface {
+	Read([]byte) (int, os.Error)
 }
 
-func newRecordingReader(src io.Reader) *_recordingReader {
+type _recordingReader struct {
+	buf *bytes.Buffer
+	src reader
+}
+
+func newRecordingReader(src reader) *_recordingReader {
 	if rr, ok := src.(*_recordingReader); ok {
 		return rr
 	}
