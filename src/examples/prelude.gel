@@ -227,6 +227,7 @@ command loop body {
     real-loop
 }
 
+#can't call it +1 because as a valid number it'll change to simply 1
 set! 1+ { + @arguments 1 }
 
 set! 1- { - @arguments 1 }

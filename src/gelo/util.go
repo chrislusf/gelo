@@ -254,22 +254,3 @@ func Convert(item interface{}) Word {
 	}
 	return word
 }
-
-func Aggregate(items map[string]interface{}) Alien {
-	Map := make(map[string]Word)
-	for k, v := range items {
-		Map[k] = Convert(v)
-	}
-	return Alien(func(vm *VM, args *List, ac uint) Word {
-		if ac == 0 {
-			return NewDictFrom(Map)
-		}
-		item, there := Map[args.Value.Ser().String()]
-		if !there {
-			//XXX this error message could be comprehensible in theory
-			//will fix itself when vm contains name, lineno, etc
-			ArgumentError(vm, "<an aggregate>", "command args*", args.Next)
-		}
-		return vm.API.TailInvoke(&List{item, args.Next})
-	})
-}
