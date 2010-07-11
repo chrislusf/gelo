@@ -19,7 +19,5 @@ GOFILES=\
 	error.go\
 	builtins.go\
 	util.go\
-	listbuilder.go\
-	unparser.go
 
 include $(GOROOT)/src/Make.pkg

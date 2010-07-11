@@ -2,6 +2,7 @@ package commands
 
 import (
 	"gelo"
+	"gelo/extensions"
 	"bytes"
 	"unicode"
 	"utf8"
@@ -50,7 +51,7 @@ func Count_substrings(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 	return n
 }
 
-var _split_parser = MakeOrElseArgParser("string ['on sep]?")
+var _split_parser = extensions.MakeOrElseArgParser("string ['on sep]?")
 
 func Split(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 	Args := _split_parser(vm, args)
@@ -72,7 +73,7 @@ func Split(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 	return head
 }
 
-var _join_parser = MakeOrElseArgParser("list ['with sep]?")
+var _join_parser = extensions.MakeOrElseArgParser("list ['with sep]?")
 
 func Join(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 	Args := _join_parser(vm, args)
@@ -163,7 +164,7 @@ func _stripper_gen(f func([]byte, func(int) bool) []byte) func(gelo.Word) gelo.W
 var _left_stripper = _stripper_gen(bytes.TrimLeftFunc)
 var _right_stripper = _stripper_gen(bytes.TrimRightFunc)
 var _both_stripper = _stripper_gen(bytes.TrimFunc)
-var _strip_parser = MakeOrElseArgParser("['left|'right]? string+")
+var _strip_parser = extensions.MakeOrElseArgParser("['left|'right]? string+")
 
 func Strip(vm *gelo.VM, args *gelo.List, _ uint) gelo.Word {
 	Args := _strip_parser(vm, args)

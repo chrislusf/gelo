@@ -88,11 +88,10 @@ func (b *buffer) Bytes() []byte {
 }
 
 func (b *buffer) String() string {
+	if b.Len() == 0 {
+		return ""
+	}
 	return string(b.Bytes())
-}
-
-func (b *buffer) Reset() {
-	b.Buffer.Reset()
 }
 
 func dup(s []byte) []byte {

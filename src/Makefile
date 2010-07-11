@@ -4,6 +4,7 @@ all: pkgs tools
 
 pkgs:
 	cd gelo; make install
+	cd gelo/extensions; make install
 	cd gelo/commands; make install
 
 tools: pkgs

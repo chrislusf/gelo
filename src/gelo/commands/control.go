@@ -1,6 +1,9 @@
 package commands
 
-import "gelo"
+import (
+	"gelo"
+	"gelo/extensions"
+)
 
 func _condition(vm *gelo.VM, w gelo.Word) bool {
 	r, e := vm.API.InvokeWordOrReturn(w)
@@ -10,7 +13,7 @@ func _condition(vm *gelo.VM, w gelo.Word) bool {
 	return vm.API.BoolOrElse(r).True()
 }
 
-var _if_parser = MakeOrElseArgParser(
+var _if_parser = extensions.MakeOrElseArgParser(
 	"cond 'then cons ['elif cond 'then cons]* ['else alt]?")
 
 func If(vm *gelo.VM, args *gelo.List, ac uint) (ret gelo.Word) {
@@ -71,7 +74,8 @@ func _cases_synerr() {
 		"\"value+ => resultant\", where value may be a command")
 }
 
-var _cases_parser = MakeOrElseArgParser("value ['as var]? ['by cmd]? cases")
+var _cases_parser = extensions.MakeOrElseArgParser(
+	"value ['as var]? ['by cmd]? cases")
 
 func Case_of(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 	Args := _cases_parser(vm, args)

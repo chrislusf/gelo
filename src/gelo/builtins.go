@@ -86,7 +86,7 @@ func BI_go(vm *VM, args *List, ac uint) Word {
 		}
 	}()
 
-	n, _ := NewNumberFromGo(uint(spawned.id))
+	n, _ := NewNumberFromGo(spawned.id)
 	return n
 }
 

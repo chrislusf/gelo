@@ -1,11 +1,13 @@
-package gelo
+package extensions
+
+import "gelo"
 
 type _builder struct {
-	head, tail *List
+	head, tail *gelo.List
 }
 
 //Create a new ListBuilder. The start parameter specifies any initial elements
-func ListBuilder(start ...Word) *_builder {
+func ListBuilder(start ...gelo.Word) *_builder {
 	b := new(_builder)
 	for _, v := range start {
 		b._add(v)
@@ -15,12 +17,12 @@ func ListBuilder(start ...Word) *_builder {
 
 //Return the constructed List. It is not safe to use the ListBuilder after
 //calling this.
-func (b *_builder) List() *List {
+func (b *_builder) List() *gelo.List {
 	return b.head
 }
 
-func (b *_builder) _add(w Word) {
-	cell := &List{w, nil}
+func (b *_builder) _add(w gelo.Word) {
+	cell := &gelo.List{w, nil}
 	if b.head != nil {
 		b.tail.Next = cell
 		b.tail = b.tail.Next
@@ -30,25 +32,25 @@ func (b *_builder) _add(w Word) {
 	}
 }
 
-func (b *_builder) Push(w Word) {
+func (b *_builder) Push(w gelo.Word) {
 	b._add(w)
 }
 
-func (b *_builder) PushFront(w Word) {
+func (b *_builder) PushFront(w gelo.Word) {
 	if b.head != nil {
-		b.head = &List{w, b.head}
+		b.head = &gelo.List{w, b.head}
 	} else {
-		b.head = &List{w, nil}
+		b.head = &gelo.List{w, nil}
 	}
 }
 
-func (b *_builder) Extend(l *List) {
+func (b *_builder) Extend(l *gelo.List) {
 	for ; l != nil; l = l.Next {
 		b._add(l.Value)
 	}
 }
 
-func (b *_builder) ExtendFront(l *List) {
+func (b *_builder) ExtendFront(l *gelo.List) {
 	if l == nil {
 		return
 	}

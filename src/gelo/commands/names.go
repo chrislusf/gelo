@@ -1,6 +1,9 @@
 package commands
 
-import "gelo"
+import (
+	"gelo"
+	"gelo/extensions"
+)
 
 func Setx(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 	if ac != 2 {
@@ -70,7 +73,7 @@ func Swapx(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 	return sndw //returned because this is now the "closest"
 }
 
-var _up_parser = MakeOrElseArgParser("[up levels]? args+")
+var _up_parser = extensions.MakeOrElseArgParser("[up levels]? args+")
 
 func _export_parser(vm *gelo.VM, args *gelo.List) (int, *gelo.List) {
 	Args := _up_parser(vm, args)

@@ -17,7 +17,7 @@ const All_traces = Alien_trace | Runtime_trace | System_trace | Parser_trace
 
 //global tracer
 var _tracer_mutex sync.RWMutex
-var _the_tracer Port = Stderr
+var _the_tracer Port
 var _the_log *log.Logger
 var _level _trace
 
@@ -100,6 +100,9 @@ func _format_trace(kind string, all []interface{}) *buffer {
 func _tracer(req _trace, kind string, all []interface{}) {
 	_tracer_mutex.RLock()
 	defer _tracer_mutex.RUnlock()
+	if _the_tracer == nil {
+		return
+	}
 	if _level&req != 0 {
 		tr := _format_trace(kind, all).Symbol()
 		_the_tracer.Send(tr)

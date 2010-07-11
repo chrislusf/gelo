@@ -2,7 +2,7 @@ package gelo
 
 import "bytes"
 
-var Null Symbol = _iSymbol([]byte(""))
+var Null Symbol = _iSymbol([]byte("")) //TODO replace with 0
 
 func StrToSym(s string) Symbol {
 	return _dSymbol([]byte(s))

@@ -7,6 +7,7 @@ import (
 	"io"
 	"gelo"
 	"gelo/commands"
+	"gelo/extensions"
 )
 
 type LiterateReader struct {
@@ -100,8 +101,10 @@ func main() {
 
 	file_name := flag.Arg(0)
 
-	vm := gelo.NewVM(gelo.Stdio)
+	vm := gelo.NewVM(extensions.Stdio)
 	defer vm.Destroy()
+
+	gelo.SetTracer(extensions.Stderr)
 
 	vm.RegisterBundle(gelo.Core)
 	vm.RegisterBundles(commands.All)

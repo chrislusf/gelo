@@ -4,3 +4,4 @@ case $# in
 *)  echo "no pattern to match"; exit 1;;
 esac
 grep -n --color -e"$*" tools/*.go gelo/*.go gelo/commands/*.go
+gelo/extensions/*.go

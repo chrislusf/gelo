@@ -11,6 +11,7 @@ import (
 	"container/vector"
 	"gelo"
 	"gelo/commands"
+	"gelo/extensions"
 )
 
 //globals and helper functions
@@ -201,7 +202,7 @@ func _valid_idx(vm *gelo.VM, name string, w gelo.Word) int {
 	return i
 }
 
-var _slice = commands.MakeArgParser("i ['to j]?")
+var _slice = extensions.MakeArgParser("i ['to j]?")
 
 func _make_slice(vm *gelo.VM, name string, args *gelo.List) (i, j int) {
 	//XXX ugly hack because 'all|[i ['to j]?] isn't working and I am terrible
@@ -258,7 +259,7 @@ func see(vm *gelo.VM, args *gelo.List, _ uint) gelo.Word {
 	return gelo.Null
 }
 
-var _trace_parser = commands.MakeArgParser(
+var _trace_parser = extensions.MakeArgParser(
 	"'on|'off 'runtime? 'parser? 'alien? 'system?")
 
 func trace(vm *gelo.VM, args *gelo.List, _ uint) gelo.Word {
@@ -555,8 +556,10 @@ func play(vm *gelo.VM, line string) {
 func main() {
 	flag.Parse()
 
-	vm := gelo.NewVM(gelo.Stdio)
+	vm := gelo.NewVM(extensions.Stdio)
 	defer vm.Destroy()
+
+	gelo.SetTracer(extensions.Stderr)
 
 	vm.Register("$", Dollar)
 	vm.RegisterBundle(gelo.Core)

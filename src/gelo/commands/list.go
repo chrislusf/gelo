@@ -2,6 +2,7 @@ package commands
 
 import (
 	"gelo"
+	"gelo/extensions"
 	"math"
 	"bytes"
 	"sort"
@@ -17,7 +18,8 @@ func ListCon(_ *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 	return args
 }
 
-var _make_list_parser = MakeOrElseArgParser("length 'long 'with zero-value")
+var _make_list_parser = extensions.MakeOrElseArgParser(
+	"length 'long 'with zero-value")
 
 func Make_list(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 	Args := _make_list_parser(vm, args)
@@ -53,7 +55,7 @@ func LLength(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 	})
 }
 
-var _partition_parser = MakeOrElseArgParser("list 'by command")
+var _partition_parser = extensions.MakeOrElseArgParser("list 'by command")
 
 func Partition(vm *gelo.VM, args *gelo.List, _ uint) gelo.Word {
 	Args := _partition_parser(vm, args)
@@ -186,7 +188,7 @@ func Zip(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 	panic("zip in impossible state") //Issue 65
 }
 
-var _rparser = MakeOrElseArgParser("[a 'to]? b ['by i]?")
+var _rparser = extensions.MakeOrElseArgParser("[a 'to]? b ['by i]?")
 
 func _rassnum(vm *gelo.VM, d map[string]gelo.Word, key string) (float64, bool) {
 	w, ok := d[key]
@@ -317,7 +319,8 @@ func Enumerate(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 	return head
 }
 
-var _every_parser = MakeOrElseArgParser("['item name 'in]? list 'do command")
+var _every_parser = extensions.MakeOrElseArgParser(
+	"['item name 'in]? list 'do command")
 
 func Every(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 	Args := _every_parser(vm, args)
@@ -345,7 +348,8 @@ func Every(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 	})
 }
 
-var _some_parser = MakeOrElseArgParser("['item name 'in]? list 'by command")
+var _some_parser = extensions.MakeOrElseArgParser(
+	"['item name 'in]? list 'by command")
 
 func Some(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 	Args := _some_parser(vm, args)
@@ -385,7 +389,7 @@ func Some(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 	return head
 }
 
-var _reduce_parser = MakeOrElseArgParser(
+var _reduce_parser = extensions.MakeOrElseArgParser(
 	"['initial value]? ['items x y 'in]? list 'with command")
 
 func Reduce(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
@@ -458,7 +462,7 @@ func Intersect(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 	return head
 }
 
-var _comp_parser = MakeOrElseArgParser("list1 'wrt list2")
+var _comp_parser = extensions.MakeOrElseArgParser("list1 'wrt list2")
 
 func Complement_of(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 	Args := _comp_parser(vm, args)

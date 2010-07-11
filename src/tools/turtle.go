@@ -8,6 +8,7 @@ import (
 	"exp/draw/x11"
 	"gelo"
 	"gelo/commands"
+	"gelo/extensions"
 )
 
 func check(failmsg string, e os.Error) {
@@ -187,8 +188,10 @@ func main() {
 	file, err := os.Open(os.Args[1], os.O_RDONLY, 0664)
 	check("Could not open script", err)
 
-	vm := gelo.NewVM(gelo.Stdio)
+	vm := gelo.NewVM(extensions.Stdio)
 	defer vm.Destroy()
+
+	gelo.SetTracer(extensions.Stderr)
 
 	vm.RegisterBundle(gelo.Core)
 	vm.RegisterBundles(commands.All)
