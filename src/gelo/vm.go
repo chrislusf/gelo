@@ -467,8 +467,8 @@ func (vm *VM) Do(in string) (ret Word, err Error) {
 		vm.running = false
 	}()
 	vm.running = true
-	ret = vm.eval(code, nil)
-	ret.DeepCopy()
+	ret = vm.eval(code, nil).DeepCopy()
+	vm.cns.set(argument_sym, Null)
 	return
 }
 
@@ -518,8 +518,8 @@ func (vm *VM) Exec(args interface{}) (ret Word, err Error) {
 	}
 
 	vm.running = true //unset in defer handler
-	ret = vm.eval(code, Args)
-	ret = ret.DeepCopy()
+	ret = vm.eval(code, Args).DeepCopy()
+	vm.cns.set(argument_sym, Null)
 	return
 }
 

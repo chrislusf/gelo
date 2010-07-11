@@ -174,6 +174,9 @@ func (p *api) InvokeOrElse(args *List) (ret Word) {
 }
 
 func (p *api) Invoke(args *List) (ret Word, err Error) {
+	if args == nil {
+		return Null, nil
+	}
 	defer func() {
 		if x := recover(); x != nil {
 			switch t := x.(type) {
@@ -193,6 +196,9 @@ func (p *api) Invoke(args *List) (ret Word, err Error) {
 //The TailInvoke* family is only to be called when the result is to be
 //returned from the callee.
 func (*api) TailInvoke(args *List) Word {
+	if args == nil {
+		return Null
+	}
 	return build_quote_from_list(args)
 }
 

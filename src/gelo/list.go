@@ -150,8 +150,7 @@ func (l *List) Map(f func(Word) Word) *List {
 func (l *List) MapOrApply(f func(Word) Word) Word {
 	if l == nil {
 		return Null
-	}
-	if l.Next == nil {
+	} else if l.Next == nil {
 		return f(l.Value)
 	}
 	return l.Map(f)

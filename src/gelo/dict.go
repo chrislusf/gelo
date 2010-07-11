@@ -148,7 +148,7 @@ func (d *Dict) Del(name Word) {
 
 func (d *Dict) StrDel(s string) {
 	d.ser = nil
-	d.rep[s] = Null, false
+	d.rep[s] = nil, false
 }
 
 func (*Dict) Type() Symbol { return interns("*DICT*") }
