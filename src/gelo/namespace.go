@@ -113,6 +113,7 @@ func (Ns *namespace_api) Unfork() (*namespace, bool) {
 	}
 	out := vm.cns
 	vm.cns = out.up
+	out.up = nil
 	return out, true
 }
 

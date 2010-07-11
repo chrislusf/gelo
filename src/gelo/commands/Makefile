@@ -5,6 +5,7 @@ GOFILES=\
 	all.go\
 	misc.go\
 	argparse.go\
+	names.go\
 	control.go\
 	types.go\
 	port.go\
