@@ -97,7 +97,6 @@ func _format_trace(kind string, all []interface{}) *buffer {
 			buf.WriteString(t)
 		}
 	}
-	buf.WriteString("\n")
 	return buf
 }
 

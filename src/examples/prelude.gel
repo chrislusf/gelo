@@ -199,8 +199,6 @@ command lsplit {list 'on sep} {
         lindex $list @[range @arguments]
     }
     List [li $pivot] [li [1+ $pivot] to [llength $list]]
-        #[lindex $list @[range $pivot]] \*
-        #[lindex $list @[range [+ 1 $pivot] to [llength $list]]]
 }
 
 set! *set! {
