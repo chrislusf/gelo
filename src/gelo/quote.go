@@ -41,14 +41,15 @@ func build_quote_from_list(args *List) *quote {
 
 //we ONLY call this in very specific situations where we KNOW the quote does not
 //parse and want the syntax error for error reporting
-func force_synerr(vm *VM, q Quote) (ret ErrSyntax) {
+func force_synerr(vm *VM, q Quote) (ret *ErrSyntax) {
 	Q := q.unprotect()
 	defer func() {
 		x := recover()
+		//we EXPECT there to be an error
 		if x == nil {
 			systemError(nil, "Assumed\n", q, "had syntax error falsely")
 		}
-		ret = x.(ErrSyntax)
+		ret = x.(*ErrSyntax)
 	}()
 	parse(newBufFrom(Q.source))
 	return
@@ -67,7 +68,7 @@ func (q *quote) fcode() (code *command, ok bool) {
 	} else {
 		defer func() {
 			if x := recover(); x != nil {
-				if _, test := x.(ErrSyntax); test {
+				if _, test := x.(*ErrSyntax); test {
 					q.literal = true //know it doesn't parse now
 					code = nil
 					ok = false

@@ -60,19 +60,19 @@ Thank you for your time and the Gelo team deeply apologizes for the inconvience.
 }
 
 func SyntaxError(s ...interface{}) {
-	panic(ErrSyntax{_make_error(nil, s)})
+	panic(&ErrSyntax{_make_error(nil, s)})
 }
 
 func VariableUndefined(vm *VM, name interface{}) {
-	panic(ErrRuntime{_make_errorM(vm, "Undefined variable:", name)})
+	panic(&ErrRuntime{_make_errorM(vm, "Undefined variable:", name)})
 }
 
 func RuntimeError(vm *VM, s ...interface{}) {
-	panic(ErrRuntime{_make_error(vm, s)})
+	panic(&ErrRuntime{_make_error(vm, s)})
 }
 
 func TypeMismatch(vm *VM, exp, got interface{}) {
-	panic(ErrRuntime{
+	panic(&ErrRuntime{
 		_make_errorM(vm, "Type mismatch. Expected:", exp, "Got:", got),
 	})
 }
@@ -82,14 +82,14 @@ func ArgumentError(vm *VM, name, spec, args interface{}) {
 	if args == nil {
 		args = "no arguments"
 	}
-	panic(ErrRuntime{
+	panic(&ErrRuntime{
 		_make_errorM(vm, "Illegal arguments.", name, "expected:", spec, "Got:",
 			args),
 	})
 }
 
 func killed(vm *VM) Error {
-	return ErrRuntime{_make_error(vm, []interface{}{"VM killed"})}
+	return &ErrRuntime{_make_error(vm, []interface{}{"VM killed"})}
 }
 
 //common methods on error
@@ -110,54 +110,57 @@ func (e _error) Message() string {
 
 //syntax errors
 
-func (self ErrSyntax) Ser() Symbol {
+func (self *ErrSyntax) _tag() {}
+
+func (self *ErrSyntax) Ser() Symbol {
 	return Convert("Syntax error: " + self.String()).(Symbol)
 }
 
-func (self ErrSyntax) Equals(w Word) bool {
-	e, ok := w.(ErrSyntax)
+func (self *ErrSyntax) Equals(w Word) bool {
+	e, ok := w.(*ErrSyntax)
 	if !ok {
 		return false
 	}
 	return bytes.Equal([]byte(self.msg), []byte(e.msg))
 }
 
-func (self ErrSyntax) Copy() Word {
+func (self *ErrSyntax) Copy() Word {
 	return self
 }
 
-func (self ErrSyntax) DeepCopy() Word {
+func (self *ErrSyntax) DeepCopy() Word {
 	return self
 }
 
-func (self ErrSyntax) Type() Symbol {
+func (self *ErrSyntax) Type() Symbol {
 	return interns("*SYNTAX-ERROR*")
 }
 
 //Runtime Errors
 
+func (self *ErrRuntime) _tag() {}
 
-func (self ErrRuntime) Ser() Symbol {
+func (self *ErrRuntime) Ser() Symbol {
 	return StrToSym("Runtime error: " + self.String())
 }
 
-func (self ErrRuntime) Equals(w Word) bool {
-	e, ok := w.(ErrRuntime)
+func (self *ErrRuntime) Equals(w Word) bool {
+	e, ok := w.(*ErrRuntime)
 	if !ok {
 		return false
 	}
 	return bytes.Equal([]byte(self.msg), []byte(e.msg))
 }
 
-func (self ErrRuntime) Copy() Word {
+func (self *ErrRuntime) Copy() Word {
 	return self
 }
 
-func (self ErrRuntime) DeepCopy() Word {
+func (self *ErrRuntime) DeepCopy() Word {
 	return self
 }
 
-func (self ErrRuntime) Type() Symbol {
+func (self *ErrRuntime) Type() Symbol {
 	return interns("*RUNTIME-ERROR*")
 }
 

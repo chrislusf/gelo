@@ -33,6 +33,7 @@ type Error interface {
 	Word
 	From() uint32
 	String() string
+	_tag()
 }
 
 type Bool bool

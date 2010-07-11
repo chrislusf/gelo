@@ -383,7 +383,7 @@ func (vm *VM) SetProgram(q Quote) (err Error) {
 	if !ok {
 		defer func() {
 			if x := recover(); x != nil {
-				if synerr, ok := x.(ErrSyntax); ok {
+				if synerr, ok := x.(*ErrSyntax); ok {
 					err = synerr
 					return
 				}
@@ -412,7 +412,7 @@ func (vm *VM) ParseProgram(in io.Reader) (err Error) {
 	defer vm.mux.Unlock()
 	defer func() {
 		if x := recover(); x != nil {
-			if synerr, ok := x.(ErrSyntax); ok {
+			if synerr, ok := x.(*ErrSyntax); ok {
 				err = synerr
 				return
 			}
@@ -444,7 +444,7 @@ func (vm *VM) Do(in string) (ret Word, err Error) {
 			case halt_control_code:
 				sys_trace("VM", vm.id, "halted")
 				ret = (*List)(t)
-			case ErrRuntime:
+			case *ErrRuntime:
 				//Syntax error would be in the source file
 				//where Do is used so it must not be caught
 				ret, err = nil, x.(Error)
@@ -456,7 +456,7 @@ func (vm *VM) Do(in string) (ret Word, err Error) {
 	//a syntax error in 'in' is reported
 	defer func() {
 		if x := recover(); x != nil {
-			if e, ok := x.(ErrSyntax); ok {
+			if e, ok := x.(*ErrSyntax); ok {
 				ret, err = nil, e
 			} else {
 				panic(x)
@@ -494,7 +494,7 @@ func (vm *VM) Exec(args interface{}) (ret Word, err Error) {
 			case halt_control_code:
 				sys_trace("VM", vm.id, "halted")
 				ret = (*List)(t)
-			case ErrSyntax, ErrRuntime:
+			case Error:
 				//there was a reasonable error, return it
 				ret, err = nil, x.(Error)
 			}

@@ -13,7 +13,7 @@ func BI_eval(vm *VM, args *List, ac uint) (ret Word) {
 				panic(x)
 			case halt_control_code:
 				ret = (*List)(t)
-			case ErrSyntax, ErrRuntime:
+			case Error:
 				ret = x.(Error)
 			}
 		}

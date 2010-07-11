@@ -184,7 +184,7 @@ func (p *api) Invoke(args *List) (ret Word, err Error) {
 				//note that we are implicitly allowing halt_control_code
 				//to bubble
 				panic(x)
-			case ErrRuntime, ErrSyntax:
+			case Error:
 				ret, err = nil, x.(Error)
 			}
 		}
