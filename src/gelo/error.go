@@ -38,13 +38,13 @@ type ErrRuntime struct {
 
 //Predefined kinds of errors
 
-func ProgrammerError(vm *VM, s ...interface{}) {
+func programmerError(vm *VM, s ...interface{}) {
 	panic(HostProgrammerError{_make_error(vm, s)})
 }
 
 //note a system error is not a word and should only be called if the impossible
 //to recover from occurs
-func SystemError(vm *VM, s ...interface{}) {
+func systemError(vm *VM, s ...interface{}) {
 	panic(_errSystem{_make_errorM(vm, s, `
 If you are reading this, you have discovered a bug in Gelo, a  and not the
 program that you are using.

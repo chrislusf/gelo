@@ -48,7 +48,7 @@ func (vm *VM) _sanity(msg string) {
 	}
 	return
 error:
-	ProgrammerError(vm, "Dead VM attempted to "+msg)
+	programmerError(vm, "Dead VM attempted to "+msg)
 }
 
 // functions to create or destroy virtual machines
@@ -478,14 +478,14 @@ func (vm *VM) Exec(args interface{}) (ret Word, err Error) {
 	vm.mux.Lock()
 	defer vm.mux.Unlock()
 	if vm.program == nil {
-		ProgrammerError(vm, "attempted to execute VM with no program")
+		programmerError(vm, "attempted to execute VM with no program")
 	}
 	defer func() {
 		vm.running = false //true even if we error out before setting this true
 		if x := recover(); x != nil {
 			switch t := x.(type) {
 			default:
-				//either a ErrSystem or bad programming
+				//either a _errSystem or bad programming
 				//regardless, the system is now in a bad state so panic
 				sys_trace("UNABLE TO RECOVER FROM PANIC")
 				panic(x)
@@ -514,7 +514,7 @@ func (vm *VM) Exec(args interface{}) (ret Word, err Error) {
 	code, ok := vm.program.fcode()
 	if !ok {
 		//Somehow the program's quote was altered since it has been set
-		SystemError(vm, "The program has become corrupt")
+		systemError(vm, "The program has become corrupt")
 	}
 
 	vm.running = true //unset in defer handler

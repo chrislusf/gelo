@@ -46,7 +46,7 @@ func force_synerr(vm *VM, q Quote) (ret ErrSyntax) {
 	defer func() {
 		x := recover()
 		if x == nil {
-			SystemError(nil, "Assumed\n", q, "had syntax error falsely")
+			systemError(nil, "Assumed\n", q, "had syntax error falsely")
 		}
 		ret = x.(ErrSyntax)
 	}()

@@ -26,7 +26,7 @@ func IsNullString(w Word) bool {
 	if !ok {
 		return false
 	}
-	return len(s.Ser().Bytes()) == 0
+	return len(s.Bytes()) == 0
 }
 
 func intern(s []byte) Symbol {

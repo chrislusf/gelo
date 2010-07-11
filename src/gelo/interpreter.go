@@ -17,7 +17,7 @@ func (vm *VM) _deref(item *sNode) (ret Word) {
 	case synLiteral:
 		ret = item.val.(Word)
 	default:
-		SystemError(vm, "invalid node type dereferenced--parser incorrect",
+		systemError(vm, "invalid node type dereferenced--parser incorrect",
 			item)
 	}
 	ret = vm.Ns.LookupOrElse(ret)
