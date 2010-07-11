@@ -7,10 +7,8 @@ import (
 
 const VERSION = "0.1.0 alpha"
 
-type vm_id uint32
-
-var external_id vm_id = 0 //called from Go code outside a VM
-var _max_id vm_id = 0     //first VM is 1 since this gets inc'd
+var external_id uint32 = 0 //called from Go code outside a VM
+var _max_id uint32 = 0     //first VM is 1 since this gets inc'd
 var _max_id_mutex sync.Mutex
 
 type halt_control_code *List
@@ -24,15 +22,15 @@ type VM struct {
 	mux         *sync.RWMutex
 	program     *quote
 	io          Port
-	running     bool
-	id          vm_id
+	running     bool //note to self: if mutex is ever testable this is obviated
+	id          uint32
 	kill_switch chan bool
 	heritage    *_heritage
 }
 
 type _heritage struct {
 	blacklist map[string]bool
-	children  map[vm_id]chan bool
+	children  map[uint32]chan bool
 	parent    *VM
 }
 
@@ -82,11 +80,11 @@ func (vm *VM) Spawn() *VM {
 	vm2.cns = ns
 	//no parent
 	if vm.heritage == nil {
-		vm.heritage = &_heritage{children: make(map[vm_id]chan bool)}
+		vm.heritage = &_heritage{children: make(map[uint32]chan bool)}
 	}
 	//parent, no children
 	if vm.heritage.children == nil { //has a parent but no children
-		vm.heritage.children = make(map[vm_id]chan bool)
+		vm.heritage.children = make(map[uint32]chan bool)
 	}
 	vm.heritage.children[vm2.id] = vm2.kill_switch
 	vm2.heritage.parent = vm

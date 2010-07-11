@@ -259,7 +259,7 @@ func see(vm *gelo.VM, args *gelo.List, _ uint) gelo.Word {
 }
 
 var _trace_parser = commands.MakeArgParser(
-	"['on|'off] 'runtime? 'parser? 'alien? 'system?")
+	"'on|'off 'runtime? 'parser? 'alien? 'system?")
 
 func trace(vm *gelo.VM, args *gelo.List, _ uint) gelo.Word {
 	Args, ok := _trace_parser(args)

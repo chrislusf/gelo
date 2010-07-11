@@ -1,6 +1,5 @@
 package gelo
 
-import "strconv"
 import "fmt"
 import "log"
 import "sync"
@@ -73,8 +72,6 @@ func _format_trace(kind string, all []interface{}) *buffer {
 			} else {
 				buf.WriteString("false")
 			}
-		case vm_id:
-			buf.WriteString(strconv.Uitoa(uint(t)))
 		case *command:
 			if t == nil {
 				buf.WriteString("No-op")
