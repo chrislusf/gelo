@@ -95,7 +95,6 @@ set! literal? [**MULTITEST** or number? symbol? bool?]
 #Unless it's an alien, we cannot know whether it is invokable until, we actually
 #invoke it. If it's a symbol having invoked it is no gurantee that it will
 #stay bound to an invokable
-set! possibly-invokable? [**MULTITEST** or symbol? quote? alien?]
 set! error? [**MULTITEST** or syntax-error? runtime-error?]
 
 set! +number?  [**MULTITEST** and number? positive?]
@@ -168,15 +167,15 @@ set! lset! {
 
 set! nth  { lindex [head $arguments] [2nd $arguments] }
 set! 2nd  { lindex [head $arguments]  1 }
-set! 3rd  { lindex [head $arguments]  2 }
-set! 4th  { lindex [head $arguments]  3 }
-set! 5th  { lindex [head $arguments]  4 }
-set! 6th  { lindex [head $arguments]  5 }
-set! 7th  { lindex [head $arguments]  6 }
-set! 8th  { lindex [head $arguments]  7 }
-set! 9th  { lindex [head $arguments]  8 }
-set! 10th { lindex [head $arguments]  9 }
-set! last { lindex [head $arguments] -1 }
+set! 3rd  { nth  2 }
+set! 4th  { nth  3 }
+set! 5th  { nth  4 }
+set! 6th  { nth  5 }
+set! 7th  { nth  6 }
+set! 8th  { nth  7 }
+set! 9th  { nth  8 }
+set! 10th { nth  9 }
+set! last { nth -1 }
 
 set! rune-length {
     llength [<-runes [head $arguments]]

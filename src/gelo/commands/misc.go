@@ -52,10 +52,55 @@ func Quote(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 	return gelo.NewQuoteFrom(args.Value.Ser())
 }
 
+func Invokablep(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
+	if ac == 0 {
+		return gelo.False
+	}
+	return args.MapOrApply(func(w gelo.Word) gelo.Word {
+		_, ok := vm.API.IsInvokable(w)
+		return gelo.ToBool(ok)
+	})
+}
+
+func InvokableOrId(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
+	if ac == 0 {
+		return gelo.Null
+	}
+	return args.MapOrApply(func(w gelo.Word) gelo.Word {
+		i, ok := vm.API.IsInvokable(w)
+		if !ok {
+			return w
+		}
+		return i
+	})
+}
+
+func MakeInvokable(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
+	if ac == 0 {
+		return gelo.Noop
+	}
+	return args.MapOrApply(func(w gelo.Word) gelo.Word {
+		i, ok := vm.API.IsInvokable(w)
+		if !ok {
+			return gelo.Alien(
+				func(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
+					if ac != 0 {
+						gelo.ArgumentError(vm, w.Ser(), "", args)
+					}
+					return w
+				})
+		}
+		return i
+	})
+}
+
 var MiscCommands = map[string]interface{}{
-	"halt":         Halt,
-	"id":           Id,
-	"value":        Value,
-	"partial-eval": Partial_eval,
-	"Quote":        Quote,
+	"halt":            Halt,
+	"id":              Id,
+	"value":           Value,
+	"partial-eval":    Partial_eval,
+	"Quote":           Quote,
+	"invokable?":      Invokablep,
+	"invokable-or-id": InvokableOrId,
+	"force-invokable": MakeInvokable,
 }
