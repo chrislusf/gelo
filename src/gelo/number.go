@@ -82,10 +82,6 @@ func (n *Number) Int() (int64, bool) {
 	return int64(num), true
 }
 
-func (*Number) Type() Symbol {
-	return interns("*NUMBER*")
-}
-
 func (n *Number) Ser() Symbol {
 	if n.ser == nil {
 		if i, ok := n.Int(); ok {
@@ -97,6 +93,14 @@ func (n *Number) Ser() Symbol {
 	return BytesToSym(n.ser)
 }
 
+func (n *Number) Equals(w Word) bool {
+	on, ok := w.(*Number)
+	if !ok {
+		return false
+	}
+	return on.num == n.num //XXX should check that they are within mach eps
+}
+
 func (n *Number) Copy() Word {
 	var ser []byte
 	if n.ser != nil {
@@ -106,12 +110,10 @@ func (n *Number) Copy() Word {
 	return &Number{n.num, ser}
 }
 
-func (n *Number) DeepCopy() Word { return n.Copy() }
+func (n *Number) DeepCopy() Word {
+	return n.Copy()
+}
 
-func (n *Number) Equals(w Word) bool {
-	on, ok := w.(*Number)
-	if !ok {
-		return false
-	}
-	return on.num == n.num //XXX should check that they are within mach eps
+func (*Number) Type() Symbol {
+	return interns("*NUMBER*")
 }

@@ -110,10 +110,6 @@ func (e _error) Message() string {
 
 //syntax errors
 
-func (self ErrSyntax) Type() Symbol {
-	return interns("*SYNTAX-ERROR*")
-}
-
 func (self ErrSyntax) Ser() Symbol {
 	return Convert("Syntax error: " + self.String()).(Symbol)
 }
@@ -126,16 +122,20 @@ func (self ErrSyntax) Equals(w Word) bool {
 	return bytes.Equal([]byte(self.msg), []byte(e.msg))
 }
 
-func (self ErrSyntax) Copy() Word { return self }
+func (self ErrSyntax) Copy() Word {
+	return self
+}
 
-func (self ErrSyntax) DeepCopy() Word { return self }
+func (self ErrSyntax) DeepCopy() Word {
+	return self
+}
 
+func (self ErrSyntax) Type() Symbol {
+	return interns("*SYNTAX-ERROR*")
+}
 
 //Runtime Errors
 
-func (self ErrRuntime) Type() Symbol {
-	return interns("*RUNTIME-ERROR*")
-}
 
 func (self ErrRuntime) Ser() Symbol {
 	return StrToSym("Runtime error: " + self.String())
@@ -149,10 +149,17 @@ func (self ErrRuntime) Equals(w Word) bool {
 	return bytes.Equal([]byte(self.msg), []byte(e.msg))
 }
 
-func (self ErrRuntime) Copy() Word { return self }
+func (self ErrRuntime) Copy() Word {
+	return self
+}
 
-func (self ErrRuntime) DeepCopy() Word { return self }
+func (self ErrRuntime) DeepCopy() Word {
+	return self
+}
 
+func (self ErrRuntime) Type() Symbol {
+	return interns("*RUNTIME-ERROR*")
+}
 
 //Implementation details
 

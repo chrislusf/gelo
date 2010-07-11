@@ -5,6 +5,11 @@ import (
 	"bufio"
 )
 
+var (
+	Stdio  = &_stdio{bufio.NewReader(os.Stdin)}
+	Stderr = &_stderr{}
+)
+
 type Chan struct {
 	c chan Word
 }
@@ -37,10 +42,6 @@ func (c *Chan) Closed() bool {
 	return closed(c.c)
 }
 
-func (c *Chan) Type() Symbol {
-	return interns("*CHAN*")
-}
-
 func (c *Chan) Ser() Symbol {
 	return c.Type()
 }
@@ -59,6 +60,10 @@ func (c *Chan) Equals(w Word) bool {
 		return false
 	}
 	return oc.c == c.c
+}
+
+func (c *Chan) Type() Symbol {
+	return interns("*CHAN*")
 }
 
 type _stdio struct {
@@ -83,10 +88,6 @@ func (s *_stdio) Closed() bool {
 	return false
 }
 
-func (s *_stdio) Type() Symbol {
-	return interns("*STDIO*")
-}
-
 func (s *_stdio) Ser() Symbol {
 	return s.Type()
 }
@@ -102,6 +103,10 @@ func (s *_stdio) DeepCopy() Word {
 func (s *_stdio) Equals(w Word) bool {
 	_, ok := w.(*_stdio)
 	return ok
+}
+
+func (s *_stdio) Type() Symbol {
+	return interns("*STDIO*")
 }
 
 type _stderr struct{}
@@ -123,10 +128,6 @@ func (s *_stderr) Closed() bool {
 	return false
 }
 
-func (s *_stderr) Type() Symbol {
-	return interns("*STDIO*")
-}
-
 func (s *_stderr) Ser() Symbol {
 	return s.Type()
 }
@@ -144,7 +145,6 @@ func (s *_stderr) Equals(w Word) bool {
 	return ok
 }
 
-var (
-	Stdio  = &_stdio{bufio.NewReader(os.Stdin)}
-	Stderr = &_stderr{}
-)
+func (s *_stderr) Type() Symbol {
+	return interns("*STDIO*")
+}

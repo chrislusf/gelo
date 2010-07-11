@@ -8,7 +8,7 @@ func NewList(s ...Word) *List {
 
 func NewListFrom(s []Word) *List {
 	if len(s) == 0 {
-		return (*List)(nil)
+		return EmptyList
 	}
 	head := &List{s[0], nil}
 	tail := head
@@ -156,8 +156,6 @@ func (l *List) MapOrApply(f func(Word) Word) Word {
 	return l.Map(f)
 }
 
-func (*List) Type() Symbol { return interns("*LIST*") }
-
 func (l *List) Ser() Symbol {
 	var bytes []byte
 	buf := newBuf(0)
@@ -173,36 +171,6 @@ func (l *List) Ser() Symbol {
 	}
 	buf.WriteString("}")
 	return buf.Symbol()
-}
-
-func (l *List) Copy() Word {
-	//WARNING/TODO does not detect cycles
-	var head, tail *List
-	for ; l != nil; l = l.Next {
-		if head != nil {
-			tail.Next = &List{l.Value, nil}
-			tail = tail.Next
-		} else {
-			head = &List{l.Value, nil}
-			tail = head
-		}
-	}
-	return head
-}
-
-func (l *List) DeepCopy() Word {
-	//WARNING/TODO does not detect cycles
-	var head, tail *List
-	for ; l != nil; l = l.Next {
-		if head != nil {
-			tail.Next = &List{l.Value.DeepCopy(), nil}
-			tail = tail.Next
-		} else {
-			head = &List{l.Value.DeepCopy(), nil}
-			tail = head
-		}
-	}
-	return head
 }
 
 func (l *List) Equals(w Word) bool {
@@ -223,4 +191,36 @@ func (l *List) Equals(w Word) bool {
 		l, ol = l.Next, ol.Next
 	}
 	return true
+}
+
+func (l *List) Copy() Word {
+	var head, tail *List
+	for ; l != nil; l = l.Next {
+		if head != nil {
+			tail.Next = &List{l.Value, nil}
+			tail = tail.Next
+		} else {
+			head = &List{l.Value, nil}
+			tail = head
+		}
+	}
+	return head
+}
+
+func (l *List) DeepCopy() Word {
+	var head, tail *List
+	for ; l != nil; l = l.Next {
+		if head != nil {
+			tail.Next = &List{l.Value.DeepCopy(), nil}
+			tail = tail.Next
+		} else {
+			head = &List{l.Value.DeepCopy(), nil}
+			tail = head
+		}
+	}
+	return head
+}
+
+func (*List) Type() Symbol {
+	return interns("*LIST*")
 }

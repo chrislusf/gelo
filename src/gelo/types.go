@@ -1,11 +1,11 @@
 package gelo
 
 type Word interface {
-	Type() Symbol
 	Ser() Symbol
 	Copy() Word     //these two should be in a MutableWord interface since
 	DeepCopy() Word //a lot of the intrinsic types are immutable
 	Equals(Word) bool
+	Type() Symbol
 }
 
 type Symbol interface {
@@ -54,18 +54,18 @@ type Dict struct {
 
 type Alien func(*VM, *List, uint) Word
 
-func (Alien) Type() Symbol {
-	return interns("*ALIEN*")
-}
 func (a Alien) Ser() Symbol {
-	return a.Type()
+	return a.Type() //we hope some day that reflection can get the name of a
 }
+
 func (a Alien) Copy() Word {
 	return a
 }
+
 func (a Alien) DeepCopy() Word {
 	return a
 }
+
 func (a Alien) Equals(w Word) bool {
 	oa, ok := w.(Alien)
 	if !ok {
@@ -74,20 +74,28 @@ func (a Alien) Equals(w Word) bool {
 	return a == oa
 }
 
-//defined at the top of vm.go as it is a special internal tag
-func (defert) Type() Symbol {
-	return interns("*DEFER*")
+func (Alien) Type() Symbol {
+	return interns("*ALIEN*")
 }
+
+//defined at the top of vm.go as it is a special internal tag
 func (d defert) Ser() Symbol {
 	return d.Type()
 }
+
 func (d defert) Copy() Word {
 	return d
 }
+
 func (d defert) DeepCopy() Word {
 	return d
 }
+
 func (defert) Equals(w Word) bool {
 	_, ok := w.(defert)
 	return ok
+}
+
+func (defert) Type() Symbol {
+	return interns("*DEFER*")
 }

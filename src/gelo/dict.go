@@ -109,7 +109,9 @@ func (d *Dict) Map() map[string]Word {
 	return ret
 }
 
-func (d *Dict) Len() int { return len(d.rep) }
+func (d *Dict) Len() int {
+	return len(d.rep)
+}
 
 //these methods sidestep the hashing restrictions on Go maps
 func (d *Dict) Get(name Word) (w Word, ok bool) {
@@ -151,7 +153,6 @@ func (d *Dict) StrDel(s string) {
 	d.rep[s] = nil, false
 }
 
-func (*Dict) Type() Symbol { return interns("*DICT*") }
 func (d *Dict) Ser() Symbol {
 	if d.ser != nil {
 		return BytesToSym(d.ser)
@@ -175,20 +176,6 @@ func (d *Dict) Ser() Symbol {
 	return BytesToSym(d.ser)
 }
 
-func (d *Dict) Copy() Word {
-	ret := NewDict()
-	for k, v := range d.rep {
-		ret.rep[k] = v
-	}
-	return ret
-}
-func (d *Dict) DeepCopy() Word {
-	ret := NewDict()
-	for k, v := range d.rep {
-		ret.rep[k] = v.DeepCopy()
-	}
-	return ret
-}
 func (d *Dict) Equals(w Word) bool {
 	od, ok := w.(*Dict)
 	if !ok {
@@ -207,4 +194,24 @@ func (d *Dict) Equals(w Word) bool {
 		}
 	}
 	return true
+}
+
+func (d *Dict) Copy() Word {
+	ret := NewDict()
+	for k, v := range d.rep {
+		ret.rep[k] = v
+	}
+	return ret
+}
+
+func (d *Dict) DeepCopy() Word {
+	ret := NewDict()
+	for k, v := range d.rep {
+		ret.rep[k] = v.DeepCopy()
+	}
+	return ret
+}
+
+func (*Dict) Type() Symbol {
+	return interns("*DICT*")
 }

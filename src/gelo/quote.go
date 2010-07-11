@@ -89,7 +89,13 @@ type quote struct {
 	source  []byte
 }
 
-func (q *quote) unprotect() *quote { return q }
+func (q *quote) unprotect() *quote {
+	return q
+}
+
+func (q *quote) Ser() Symbol {
+	return BytesToSym(dup(q.source))
+}
 
 func (q *quote) Equals(w Word) bool {
 	oq, ok := w.(Quote)
@@ -99,20 +105,29 @@ func (q *quote) Equals(w Word) bool {
 	return bytes.Equal(q.source, oq.unprotect().source)
 }
 
-func (q *quote) Ser() Symbol { return BytesToSym(dup(q.source)) }
+func (q *quote) Copy() Word {
+	return q
+}
 
-func (*quote) Type() Symbol { return interns("*QUOTE*") }
+func (q *quote) DeepCopy() Word {
+	return q
+}
 
-//quotes are immutable
-func (q *quote) Copy() Word     { return q }
-func (q *quote) DeepCopy() Word { return q }
-
+func (*quote) Type() Symbol {
+	return interns("*QUOTE*")
+}
 
 type protected_quote struct {
 	protectee *quote
 }
 
-func (q *protected_quote) unprotect() *quote { return q.protectee }
+func (q *protected_quote) unprotect() *quote {
+	return q.protectee
+}
+
+func (q *protected_quote) Ser() Symbol {
+	return q.protectee.Ser()
+}
 
 func (q *protected_quote) Equals(w Word) bool {
 	oq, ok := w.(Quote)
@@ -122,9 +137,15 @@ func (q *protected_quote) Equals(w Word) bool {
 	return bytes.Equal(q.unprotect().source, oq.unprotect().source)
 }
 
-func (q *protected_quote) Ser() Symbol { return q.protectee.Ser() }
 
-func (*protected_quote) Type() Symbol { return interns("*QUOTE*") }
+func (q *protected_quote) Copy() Word {
+	return q
+}
 
-func (q *protected_quote) Copy() Word     { return q }
-func (q *protected_quote) DeepCopy() Word { return q }
+func (q *protected_quote) DeepCopy() Word {
+	return q
+}
+
+func (*protected_quote) Type() Symbol {
+	return interns("*QUOTE*")
+}

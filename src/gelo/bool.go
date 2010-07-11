@@ -10,9 +10,9 @@ func ToBool(b bool) Bool {
 	return False
 }
 
-func (b Bool) True() bool { return bool(b) }
-
-func (Bool) Type() Symbol { return interns("*BOOLEAN*") }
+func (b Bool) True() bool {
+	return bool(b)
+}
 
 func (b Bool) Ser() Symbol {
 	if b {
@@ -20,16 +20,23 @@ func (b Bool) Ser() Symbol {
 	}
 	return interns("false")
 }
-func (b Bool) Copy() Word {
-	return b
-}
-func (b Bool) DeepCopy() Word {
-	return b.Copy()
-}
+
 func (b Bool) Equals(w Word) bool {
 	wb, ok := w.(Bool)
 	if !ok {
 		return false
 	}
 	return bool(b) == bool(wb)
+}
+
+func (b Bool) Copy() Word {
+	return b
+}
+
+func (b Bool) DeepCopy() Word {
+	return b.Copy()
+}
+
+func (Bool) Type() Symbol {
+	return interns("*BOOLEAN*")
 }
