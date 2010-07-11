@@ -75,7 +75,7 @@ var _up_parser = MakeOrElseArgParser("[up levels]? args+")
 func _export_parser(vm *gelo.VM, args *gelo.List) (int, *gelo.List) {
 	Args := _up_parser(vm, args)
 	levels, ok := Args["levels"]
-	var lvl int
+	lvl := 1
 	var lvl64 int64
 	if ok {
 		lvl64, ok = vm.API.NumberOrElse(levels).Int()
@@ -88,7 +88,7 @@ func _export_parser(vm *gelo.VM, args *gelo.List) (int, *gelo.List) {
 }
 
 func Exportx(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
-	lvl := 0
+	lvl := 1
 	if ac == 4 {
 		lvl, args = _export_parser(vm, args)
 	} else if ac != 2 {

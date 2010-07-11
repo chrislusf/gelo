@@ -29,7 +29,6 @@ func ToIdx(vm *gelo.VM, w gelo.Word, length int) int {
 	return (length + i) % length
 }
 
-
 func Aggregate(items map[string]interface{}) gelo.Alien {
 	Map := make(map[string]gelo.Word)
 	for k, v := range items {

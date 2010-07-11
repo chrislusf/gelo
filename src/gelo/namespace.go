@@ -95,6 +95,7 @@ func (Ns *namespace_api) _is_blacklisted(s string) bool {
 	return h.blacklist[s]
 }
 
+//Call with nil to fork a blank namespace
 func (Ns *namespace_api) Fork(n *namespace) {
 	vm := Ns.vm
 	if n == nil {
@@ -230,11 +231,11 @@ func (Ns *namespace_api) _nthlvl(lvl int, safe bool) (*namespace, bool) {
 	if safe {
 		top = nil
 	}
-	for count := 0; ns.up != top; ns = ns.up {
-		count++
+	for count := 0; ns != top; ns = ns.up {
 		if count == lvl {
 			return ns, true
 		}
+		count++
 	}
 	//reached top, but count != lvl
 	if lvl < 0 {
