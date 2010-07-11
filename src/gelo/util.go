@@ -203,7 +203,7 @@ func Convert(item interface{}) Word {
 			word = Alien(t)
 		case Word:
 			word = t
-		case defert:
+		case *defert:
 			word = t
 		case bool:
 			word = ToBool(t)

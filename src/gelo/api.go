@@ -149,7 +149,7 @@ func (p *api) IsInvokable(w Word) (Word, bool) {
 	if _, ok := w.(Alien); ok {
 		return w, true
 	}
-	if _, ok := w.(defert); ok {
+	if _, ok := w.(*defert); ok {
 		return w, true
 	}
 	return nil, false
@@ -161,7 +161,7 @@ func (p *api) InvokeOrElse(args *List) (ret Word) {
 		return Null
 	}
 	w, c, args := p.vm.peval(args, uint(args.Len()-1))
-	if _, is_defer := w.(defert); is_defer {
+	if _, is_defer := w.(*defert); is_defer {
 		RuntimeError(p.vm, "Cannot register a defer via Invoke*")
 		return
 	}

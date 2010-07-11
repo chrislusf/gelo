@@ -87,12 +87,12 @@ func (vm *VM) peval(line *List, ac uint) (ret Word, c *command, args *List) {
 			ret = cmd.unprotect()
 		case Alien:
 			ret = cmd
-		case defert:
+		case *defert:
 			// it is up to the caller to register the defer or report an
 			// error if a defer cannot be used here
 			ret = BI_defer
 		}
-	} else if d, ok := ret.(defert); ok {
+	} else if d, ok := ret.(*defert); ok {
 		//very rare special case
 		ret = d
 		return
@@ -125,7 +125,7 @@ func (vm *VM) peval(line *List, ac uint) (ret Word, c *command, args *List) {
 func (vm *VM) _eval_line(line *sNode) Word {
 	w, c, args := vm.peval(vm.rewrite(line))
 	//if we are only evaluating a single line that means we're in a clause
-	if _, ok := w.(defert); ok {
+	if _, ok := w.(*defert); ok {
 		RuntimeError(vm, "defer commands must not be in a clause")
 	}
 	if c != nil {
@@ -159,7 +159,7 @@ func (vm *VM) eval(script *command, arguments *List) (ret Word) {
 		if script.next != nil { //allows 1 liners
 			for ; script.next != nil; script = script.next {
 				ret, c, arguments = vm.peval(vm.rewrite(script.cmd))
-				if _, ok := ret.(defert); ok {
+				if _, ok := ret.(*defert); ok {
 					//attach a defer handler
 					if arguments == nil {
 						ArgumentError(vm, "defer", "No command to defer", "")
@@ -182,7 +182,7 @@ func (vm *VM) eval(script *command, arguments *List) (ret Word) {
 		}
 		//tail call (or 1 liner)
 		ret, script, arguments = vm.peval(vm.rewrite(script.cmd))
-		if _, ok := ret.(defert); ok {
+		if _, ok := ret.(*defert); ok {
 			RuntimeError(vm, "defer call cannot be in tail position")
 		}
 		//before we continue, see if anyone wants to kill us

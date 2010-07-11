@@ -80,23 +80,23 @@ func (Alien) Type() Symbol {
 }
 
 //defined at the top of vm.go as it is a special internal tag
-func (d defert) Ser() Symbol {
+func (d *defert) Ser() Symbol {
 	return d.Type()
 }
 
-func (d defert) Copy() Word {
+func (d *defert) Copy() Word {
 	return d
 }
 
-func (d defert) DeepCopy() Word {
+func (d *defert) DeepCopy() Word {
 	return d
 }
 
-func (defert) Equals(w Word) bool {
-	_, ok := w.(defert)
+func (*defert) Equals(w Word) bool {
+	_, ok := w.(*defert)
 	return ok
 }
 
-func (defert) Type() Symbol {
+func (*defert) Type() Symbol {
 	return interns("*DEFER*")
 }

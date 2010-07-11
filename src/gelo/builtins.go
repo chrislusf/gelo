@@ -90,7 +90,7 @@ func BI_go(vm *VM, args *List, ac uint) Word {
 	return n
 }
 
-var BI_defer = defert{}
+var BI_defer = &defert{}
 
 var Core = map[string]interface{}{
 	"defer":     BI_defer,
