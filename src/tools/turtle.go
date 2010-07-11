@@ -190,7 +190,7 @@ func main() {
 	vm := gelo.NewVM(gelo.Stdio)
 	defer vm.Destroy()
 
-	vm.RegisterBundles(gelo.CoreCommands)
+	vm.RegisterBundle(gelo.Core)
 	vm.RegisterBundles(commands.All)
 
 	prelude, err := os.Open("prelude.gel", os.O_RDONLY, 0664)

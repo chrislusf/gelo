@@ -559,7 +559,7 @@ func main() {
 	defer vm.Destroy()
 
 	vm.Register("$", Dollar)
-	vm.RegisterBundles(gelo.CoreCommands)
+	vm.RegisterBundle(gelo.Core)
 	vm.RegisterBundles(commands.All)
 
 	if !*no_prelude {

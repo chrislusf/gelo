@@ -92,18 +92,9 @@ func BI_go(vm *VM, args *List, ac uint) Word {
 
 var BI_defer = defert{}
 
-var EvaluationCommands = map[string]interface{}{
+var Core = map[string]interface{}{
 	"defer":     BI_defer,
 	"eval":      BI_eval,
 	"safe-eval": BI_safe_eval,
 	"go":        BI_go,
-}
-
-var Values = map[string]interface{}{
-	"true":  True,
-	"false": False,
-}
-
-var CoreCommands = []map[string]interface{}{
-	Values, EvaluationCommands,
 }
