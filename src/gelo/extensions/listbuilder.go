@@ -5,7 +5,7 @@ import "gelo"
 //This is not intended to be used directly and is only exposed so that it can
 //be stored in other types
 type LBuilder struct {
-	n int
+	n          int
 	head, tail *gelo.List
 }
 

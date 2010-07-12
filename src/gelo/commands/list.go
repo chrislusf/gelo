@@ -125,7 +125,7 @@ func LIndex(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 
 func Zip(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 	if ac == 0 {
-		gelo.ArgumentError(vm, "zip", "list+", args)
+		return gelo.EmptyList
 	}
 	//set up ring of args, typecheck
 	var _rhead, ring *gelo.List
@@ -259,7 +259,7 @@ func Index_of(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 	}
 	val := args.Value
 	l, list := vm.API.ListOrElse(args.Next.Value), extensions.ListBuilder()
-	for count := 0; l != nil; l, count = l.Next, count + 1 {
+	for count := 0; l != nil; l, count = l.Next, count+1 {
 		if val.Equals(l.Value) {
 			list.Push(gelo.NewNumber(float64(count)))
 		}
@@ -272,7 +272,7 @@ func Enumerate(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 		gelo.ArgumentError(vm, "enumerate", "list", args)
 	}
 	list, builder := vm.API.ListOrElse(args.Value), extensions.ListBuilder()
-	for count := 0; list != nil; list, count = list.Next, count + 1 {
+	for count := 0; list != nil; list, count = list.Next, count+1 {
 		n, _ := gelo.NewNumberFromGo(count)
 		builder.Push(gelo.NewList(gelo.NewList(n, list.Value)))
 	}
