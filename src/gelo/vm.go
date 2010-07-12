@@ -289,7 +289,7 @@ func (vm *VM) ReadSlice(name string) ([]Word, bool) {
 	}
 	//we don't call (*List).Slice() since that would copy everything again
 	slice := make([]Word, s.Len())
-	for i := 0; s != nil; s, i = s.Next, i + 1 {
+	for i := 0; s != nil; s, i = s.Next, i+1 {
 		slice[i] = s.Value
 	}
 	return slice, true

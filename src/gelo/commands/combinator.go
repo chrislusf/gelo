@@ -1,37 +1,30 @@
 package commands
 
-import "gelo"
-
-func _uninvokable(vm *gelo.VM, w gelo.Word) {
-	gelo.RuntimeError(vm, w, "failed to invoke")
-}
+import (
+	"gelo"
+	"gelo/extensions"
+)
 
 func Compose(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 	if ac == 0 {
-		return gelo.Alien(Id)
-	}
-	if ac == 1 {
-		if !possiblyInvokable(args.Value) {
-			gelo.TypeMismatch(vm, "invokable", args.Value.Type())
-		}
-		return args.Value //TODO add a wrapper function to call it
+		return gelo.Alien(Id) //defined in eval.go
+	} else if ac == 1 {
+		return vm.API.InvokableOrElse(args.Value)
 	}
 	//reverse and type check (as much as possible)
-	var fs *gelo.List
+	builder := extensions.ListBuilder()
+	defer builder.Destroy()
 	for ; args != nil; args = args.Next {
-		v := args.Value
-		if !possiblyInvokable(v) {
-			gelo.TypeMismatch(vm, "invokable", v.Type())
-		}
-		fs = &gelo.List{v, fs}
+		builder.PushFront(vm.API.InvokableOrElse(args.Value))
 	}
-	return gelo.Alien(func(vm *gelo.VM, args *gelo.List, ac uint) (ret gelo.Word) {
-		ret = args
+	fs := builder.List()
+	return gelo.Alien(func(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 		c := fs
+		var ret gelo.Word = args
 		for ; c.Next != nil; c = c.Next {
 			ret = gelo.AsList(vm.API.InvokeCmdOrElse(c.Value, ret.(*gelo.List)))
 		}
-		return vm.API.InvokeCmdOrElse(c.Value, ret.(*gelo.List))
+		return vm.API.TailInvokeCmd(c.Value, ret.(*gelo.List))
 	})
 }
 
@@ -39,28 +32,18 @@ func Cleave(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 	if ac < 1 {
 		gelo.ArgumentError(vm, "cleave", "cmds+", args)
 	}
-	var head, tail *gelo.List
+	builder := extensions.ListBuilder()
+	defer builder.Destroy()
 	for ; args != nil; args = args.Next {
-		v := args.Value
-		if !possiblyInvokable(v) {
-			gelo.TypeMismatch(vm, "invokable", v.Type())
-		}
-		if head != nil {
-			tail.Next = &gelo.List{v, nil}
-			tail = tail.Next
-		} else {
-			head = &gelo.List{v, nil}
-			tail = head
-		}
+		builder.Push(vm.API.InvokableOrElse(args.Value))
 	}
+	list := builder.List()
 	return gelo.Alien(func(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
-		h := gelo.NewList(vm.API.InvokeCmdOrElse(head.Value, args))
-		t := h
-		for c := head.Next; c != nil; c = c.Next {
-			t.Next = &gelo.List{vm.API.InvokeCmdOrElse(c.Value, args), nil}
-			t = t.Next
+		builder := extensions.ListBuilder()
+		for c := list; c != nil; c = c.Next {
+			builder.Push(vm.API.InvokeCmdOrElse(c.Value, args))
 		}
-		return h
+		return builder.List()
 	})
 }
 
@@ -83,29 +66,30 @@ func Partial(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 	if ac < 2 {
 		gelo.ArgumentError(vm, "partial", "command [args*|'*|'X]+", args)
 	}
-	cmd, args := args.Value, args.Next
-	if !possiblyInvokable(cmd) {
-		gelo.TypeMismatch(vm, "invokable", cmd.Type())
-	}
+	cmd, args := vm.API.InvokableOrElse(args.Value), args.Next
+
 	a_star := false
 	var val gelo.Word
 	var kind _partial_kind
 	var ph, pt *_partial
 	for ; args != nil; args = args.Next {
 		kind, val = _pk_fill, nil
-		sym := vm.API.SymbolOrElse(args.Value)
-		if gelo.StrEqualsSym("X", sym) {
-			if a_star {
-				gelo.ArgumentError(vm, "partial",
-					"there will be no arguments left after *", args)
+		if sym, ok := args.Value.(gelo.Symbol); ok {
+			if gelo.StrEqualsSym("X", sym) {
+				if a_star {
+					gelo.ArgumentError(vm, "partial",
+						"there will be no arguments left after *", args)
+				}
+				kind = _pk_hole
+			} else if gelo.StrEqualsSym("*", sym) {
+				if a_star {
+					gelo.ArgumentError(vm, "partial",
+						"only one * can be specfied", args)
+				}
+				kind, a_star = _pk_slurp, true
+			} else {
+				val = sym
 			}
-			kind = _pk_hole
-		} else if gelo.StrEqualsSym("*", sym) {
-			if a_star {
-				gelo.ArgumentError(vm, "partial",
-					"only one * can be specfied", args)
-			}
-			kind, a_star = _pk_slurp, true
 		} else {
 			val = args.Value
 		}
@@ -118,28 +102,22 @@ func Partial(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 		}
 	}
 	pt = nil
+
 	return gelo.Alien(func(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
-		real_args := &gelo.List{cmd, nil}
-		tail := real_args
+		real_args := extensions.ListBuilder(cmd)
 		for pls := ph; pls != nil; pls = pls.next {
 			switch pls.kind {
 			case _pk_fill:
-				tail.Next = &gelo.List{pls.item, nil}
-				tail = tail.Next
+				real_args.Push(pls.item)
 			case _pk_hole:
 				if args == nil {
 					gelo.ArgumentError(vm, "partial function",
 						"requires at least one more argument", args)
 				}
-				tail.Next = &gelo.List{args.Value, nil}
-				tail = tail.Next
+				real_args.Push(args.Value)
 				args = args.Next
 			case _pk_slurp:
-				if args != nil {
-					tail.Next = args.Copy().(*gelo.List)
-					for ; tail.Next != nil; tail = tail.Next {
-					}
-				}
+				real_args.Extend(args.Copy().(*gelo.List))
 				args = nil
 			}
 		}
@@ -147,11 +125,7 @@ func Partial(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 			gelo.ArgumentError(vm, "partial function", "got too many arguments",
 				args)
 		}
-		ret, err := vm.API.Invoke(real_args)
-		if err != nil {
-			panic(err)
-		}
-		return ret
+		return vm.API.InvokeOrElse(real_args.List())
 	})
 }
 

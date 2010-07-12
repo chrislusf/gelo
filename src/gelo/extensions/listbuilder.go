@@ -15,6 +15,12 @@ func ListBuilder(start ...gelo.Word) *_builder {
 	return b
 }
 
+//Call if you're going to create a closure in an alien using listbuilder but
+//don't want to keep this around. Otherwise, it can be safely ignored.
+func (b *_builder) Destroy() {
+	b.head, b.tail = nil, nil
+}
+
 //Return the constructed List. It is not safe to use the ListBuilder after
 //calling this.
 func (b *_builder) List() *gelo.List {
