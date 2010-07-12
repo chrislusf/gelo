@@ -1,6 +1,9 @@
 package commands
 
-import "gelo"
+import (
+	"gelo"
+	"gelo/extensions"
+)
 
 func DictCon(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 	if ac == 0 {
@@ -18,10 +21,10 @@ func DictCon(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 
 func Dict_get(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 	if !(ac == 2 || ac == 3) {
-		gelo.ArgumentError(vm, "dict.get", "dictionary key-name default?", args)
+		gelo.ArgumentError(vm, "dict.get", "dictionary key default?", args)
 	}
 	d := vm.API.DictOrElse(args.Value)
-	k := args.Next.Value.Ser()
+	k := args.Next.Value
 	ret, ok := d.Get(k)
 	if !ok {
 		if ac == 3 {
@@ -37,26 +40,25 @@ func Dict_get(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 // sets key to the default in addition to returning it
 func Dict_getx(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 	if ac != 3 {
-		gelo.ArgumentError(vm, "dict.get!", "dictionary key-name default", args)
+		gelo.ArgumentError(vm, "dict.get!", "dictionary key default", args)
 	}
 	d := vm.API.DictOrElse(args.Value)
-	k := args.Next.Value.Ser()
+	k := args.Next.Value
 	ret, ok := d.Get(k)
 	if !ok {
 		df := args.Next.Next.Value
 		d.Set(k, df)
 		return df
-		gelo.RuntimeError(vm, "dictionary does not contain", k)
 	}
 	return ret
 }
 
 func Dict_setx(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 	if ac != 3 {
-		gelo.ArgumentError(vm, "dict.set", "dictionary key-name value", args)
+		gelo.ArgumentError(vm, "dict.set", "dictionary key value", args)
 	}
 	d := vm.API.DictOrElse(args.Value)
-	k := args.Next.Value.Ser()
+	k := args.Next.Value
 	v := args.Next.Next.Value
 	d.Set(k, v)
 	return v
@@ -64,10 +66,10 @@ func Dict_setx(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 
 func Dict_unsetx(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 	if ac != 2 {
-		gelo.ArgumentError(vm, "dict.unset!", "dictionary key-name", args)
+		gelo.ArgumentError(vm, "dict.unset!", "dictionary key", args)
 	}
 	d := vm.API.DictOrElse(args.Value)
-	k := args.Next.Value.Ser()
+	k := args.Next.Value
 	v, ok := d.Get(k)
 	if !ok {
 		gelo.RuntimeError(vm,
@@ -79,10 +81,10 @@ func Dict_unsetx(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 
 func Dict_setp(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 	if ac != 2 {
-		gelo.ArgumentError(vm, "dict.setp?", "dictionary key-name", args)
+		gelo.ArgumentError(vm, "dict.setp?", "dictionary key", args)
 	}
 	d := vm.API.DictOrElse(args.Value.(*gelo.Dict))
-	k := args.Next.Value.Ser()
+	k := args.Next.Value
 	return gelo.ToBool(d.Has(k))
 }
 
@@ -90,58 +92,38 @@ func Dict_keys(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 	if ac != 1 {
 		gelo.ArgumentError(vm, "dict.keys", "dictionary", args)
 	}
-	d := vm.API.DictOrElse(args.Value)
-	var head, tail *gelo.List
+	d, list := vm.API.DictOrElse(args.Value), extensions.ListBuilder()
 	for k, _ := range d.Map() {
-		s := gelo.StrToSym(k)
-		if head != nil {
-			tail.Next = &gelo.List{s, nil}
-			tail = tail.Next
-		} else {
-			head = &gelo.List{s, nil}
-			tail = head
-		}
+		list.Push(gelo.StrToSym(k))
 	}
-	return head
+	return list.List()
 }
 
 func Dict_values(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 	if ac != 1 {
 		gelo.ArgumentError(vm, "dict.values", "dictionary", args)
 	}
-	d := vm.API.DictOrElse(args.Value)
-	var head, tail *gelo.List
+	d, list := vm.API.DictOrElse(args.Value), extensions.ListBuilder()
 	for _, v := range d.Map() {
-		if head != nil {
-			tail.Next = &gelo.List{v, nil}
-			tail = tail.Next
-		} else {
-			head = &gelo.List{v, nil}
-			tail = head
-		}
+		list.Push(v)
 	}
-	return head
+	return list.List()
 }
 
 func Dict_items(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 	if ac != 1 {
 		gelo.ArgumentError(vm, "dict.values", "dictionary", args)
 	}
-	d := vm.API.DictOrElse(args.Value)
-	var head, tail *gelo.List
+	d, list := vm.API.DictOrElse(args.Value), extensions.ListBuilder()
 	for k, v := range d.Map() {
-		e := gelo.NewList(gelo.NewList(gelo.StrToSym(k), v))
-		if head != nil {
-			tail.Next = e
-			tail = tail.Next
-		} else {
-			head = e
-			tail = head
-		}
+		list.Push(gelo.NewList(gelo.NewList(gelo.StrToSym(k), v)))
 	}
-	return head
+	return list.List()
 }
 
+//Add two dictionaries. d1 = d1 + d2 where
+// For k, v in d2, d1[k] = d2[k] if k not in d1 (d2[k] is not copied)
+// d1 + d2 /= d2 + d1
 func Dict_add(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 	if ac != 2 {
 		gelo.ArgumentError(vm, "dict.add", "dictionary1 dictionary2", args)
@@ -156,6 +138,9 @@ func Dict_add(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 	return d1
 }
 
+//Substract two dictionaries, d1 = d1 - d2 where
+// For k, _ in d2, remove d1[k]
+// d1 - d2 /= d2 - d1
 func Dict_sub(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 	if ac != 2 {
 		gelo.ArgumentError(vm, "dict.sub", "dictionary1 dictionary2", args)
