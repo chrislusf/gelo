@@ -24,7 +24,7 @@ type _errSystem struct {
 //This error type isn't meant to be caught by this program or the host program
 //it signals a static misuse of Gelo that needs to be corrected. Such as trying
 //to run a VM without a program or use a VM that has been killed
-type HostProgrammerError struct {
+type _hostProgrammerError struct {
 	_error
 }
 
@@ -39,7 +39,7 @@ type ErrRuntime struct {
 //Predefined kinds of errors
 
 func programmerError(vm *VM, s ...interface{}) {
-	panic(HostProgrammerError{_make_error(vm, s)})
+	panic(_hostProgrammerError{_make_error(vm, s)})
 }
 
 //note a system error is not a word and should only be called if the impossible
