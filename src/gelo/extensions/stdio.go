@@ -4,6 +4,7 @@ import (
 	"gelo"
 	"os"
 	"bufio"
+	"bytes"
 )
 
 var (
@@ -16,7 +17,19 @@ type _stdio struct {
 }
 
 func (s *_stdio) Send(w gelo.Word) {
-	os.Stdout.Write(w.Ser().Bytes())
+	var out []byte
+	if l, ok := w.(*gelo.List); ok {
+		var buf bytes.Buffer
+		for ; l.Next != nil; l = l.Next {
+			buf.Write(l.Value.Ser().Bytes())
+			buf.WriteString(" ")
+		}
+		buf.Write(l.Value.Ser().Bytes())
+		out = buf.Bytes()
+	} else {
+		out = w.Ser().Bytes()
+	}
+	os.Stdout.Write(out)
 	os.Stdout.WriteString("\n")
 }
 
