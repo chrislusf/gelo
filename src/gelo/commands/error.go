@@ -16,7 +16,7 @@ func SyntaxError(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 	}
 	//TODO should get a line-no, etc to allow creation of good error message
 	gelo.SyntaxError(args)
-	return gelo.Null //Issue 65
+	panic("Issue 65")
 }
 
 func TypeMismatchError(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
@@ -25,7 +25,7 @@ func TypeMismatchError(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 			"expected-type recieved-type", args)
 	}
 	gelo.TypeMismatch(vm, args.Value.Ser(), args.Next.Value.Ser())
-	return gelo.Null //Issue 65
+	panic("Issue 65")
 }
 
 func ArgumentError(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
@@ -34,7 +34,7 @@ func ArgumentError(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 	}
 	gelo.ArgumentError(vm, args.Value.Ser(), args.Next.Value.Ser(),
 		args.Next.Next.Value.Ser())
-	return gelo.Null //Issue 65
+	panic("Issue 65")
 }
 
 var ErrorCommands = map[string]interface{}{
