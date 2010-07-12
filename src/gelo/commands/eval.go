@@ -94,7 +94,7 @@ func MakeInvokable(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 	})
 }
 
-var MiscCommands = map[string]interface{}{
+var EvalCommands = map[string]interface{}{
 	"halt":            Halt,
 	"id":              Id,
 	"value":           Value,

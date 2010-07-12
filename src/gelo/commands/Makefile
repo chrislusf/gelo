@@ -3,7 +3,7 @@ include $(GOROOT)/src/Make.$(GOARCH)
 TARG=gelo/commands
 GOFILES=\
 	all.go\
-	misc.go\
+	eval.go\
 	argparse.go\
 	names.go\
 	control.go\
