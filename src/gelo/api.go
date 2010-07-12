@@ -185,7 +185,7 @@ func (p *api) Invoke(args *List) (ret Word, err Error) {
 				//to bubble
 				panic(x)
 			case Error:
-				ret, err = nil, x.(Error)
+				ret, err = nil, t
 			}
 		}
 	}()

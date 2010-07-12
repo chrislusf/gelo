@@ -58,17 +58,15 @@ func If(vm *gelo.VM, args *gelo.List, ac uint) (ret gelo.Word) {
  * Pattern items are matched by their Equals method.
  */
 func _case_eval(vm *gelo.VM, w gelo.Word, args *gelo.List) (ret gelo.Word) {
-	//XXX This disallows us to make tail calls
-	switch w.(type) {
-	case gelo.Quote, gelo.Alien, gelo.Symbol:
-		ret, err := vm.API.InvokeCmd(w, args)
-		if err != nil {
-			return w
-		}
-		return ret
+	//if w isn't invokable return, otherwise call with args. It's the last
+	//part that prevents us from using TailInvokeWordOrReturn
+	inv, ok := vm.API.IsInvokable(w)
+	if !ok {
+		return w
 	}
-	return w
+	return vm.API.TailInvokeCmd(inv, args)
 }
+
 func _cases_synerr() {
 	gelo.SyntaxError("Patterns needs to be:",
 		"\"value+ => resultant\", where value may be a command")
@@ -128,7 +126,7 @@ func Case_of(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 		}
 
 		//Parse a single line
-		var head, tail *gelo.List
+		list := extensions.ListBuilder()
 		var resultant gelo.Word
 		for ; item != nil; item = item.Next {
 			if item.Next == nil { //ultimate cell
@@ -139,17 +137,13 @@ func Case_of(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 					continue
 				}
 				_cases_synerr()
-			} else if head != nil { //regular cell, store
-				tail.Next = &gelo.List{item.Value, nil}
-				tail = tail.Next
 			} else {
-				head = &gelo.List{item.Value, nil}
-				tail = head
+				list.Push(item.Value)
 			}
 		}
 
 		//see if key matches any of the items we found on this line
-		for ; head != nil; head = head.Next {
+		for head := list.List(); head != nil; head = head.Next {
 			if key.Equals(head.Value) {
 				return _case_eval(vm, resultant, arguments)
 			}
