@@ -2,6 +2,7 @@ package commands
 
 import (
 	"gelo"
+	"gelo/extensions"
 	"regexp"
 )
 
@@ -70,13 +71,11 @@ func Re_matches(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 	r := ReOrElse(vm, args.Value)
 	s := args.Next.Value.Ser().Bytes()
 	matches := r.regexp.MatchSlices(s)
-	head := &gelo.List{gelo.BytesToSym(matches[0]), nil}
-	tail := head
-	for _, v := range matches[1:] {
-		tail.Next = &gelo.List{gelo.BytesToSym(v), nil}
-		tail = tail.Next
+	list := extensions.ListBuilder()
+	for _, v := range matches {
+		list.Push(gelo.BytesToSym(v))
 	}
-	return head
+	return list.List()
 }
 
 func Re_replace(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
