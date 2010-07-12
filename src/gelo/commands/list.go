@@ -27,20 +27,16 @@ func Make_list(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 	if !ok || length < 1 {
 		gelo.TypeMismatch(vm, "nonzero positive integer", "number")
 	}
-	zero := Args["zero-value"]
-	node := func() *gelo.List { return &gelo.List{zero.Copy(), nil} }
-	head := node()
-	tail := head
+	zero, list := Args["zero-value"], extensions.ListBuilder()
 	for i := int64(1); i < length; i++ {
-		tail.Next = node()
-		tail = tail.Next
+		list.Push(zero.Copy())
 	}
-	return head
+	return list.List()
 }
 
 // arg-count returns the number of arguments that it is called with.
 // It is of limited functionality but is occasionally of use
-func Arg_count(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
+func Arg_count(_ *gelo.VM, _ *gelo.List, ac uint) gelo.Word {
 	n, _ := gelo.NewNumberFromGo(ac)
 	return n
 }
@@ -50,7 +46,7 @@ func LLength(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 		gelo.ArgumentError(vm, "llength", "list+", args)
 	}
 	return args.MapOrApply(func(w gelo.Word) gelo.Word {
-		n, _ := gelo.NewNumberFromGo(uint(vm.API.ListOrElse(w).Len()))
+		n, _ := gelo.NewNumberFromGo(vm.API.ListOrElse(w).Len())
 		return n
 	})
 }
@@ -60,28 +56,21 @@ var _partition_parser = extensions.MakeOrElseArgParser("list 'by command")
 func Partition(vm *gelo.VM, args *gelo.List, _ uint) gelo.Word {
 	Args := _partition_parser(vm, args)
 	list := vm.API.ListOrElse(Args["list"])
-	cmd := Args["command"]
-	buckets := make(map[string]*gelo.List)
-	var head, tail *gelo.List
+	cmd := vm.API.InvokableOrElse(Args["command"])
+	buckets := make(map[string]*extensions.LBuilder)
 	for ; list != nil; list = list.Next {
-		wrap := gelo.NewList(list.Value)
-		key := vm.API.InvokeCmdOrElse(cmd, wrap).Ser().String()
+		key := vm.API.InvokeCmdOrElse(cmd, gelo.AsList(list.Value)).Ser().String()
 		if bt, there := buckets[key]; there {
-			bt.Next = wrap
-			buckets[key] = bt.Next
+			bt.Push(list.Value)
 		} else { //first item in this class
-			dwrap := gelo.NewList(wrap)
-			if head != nil {
-				tail.Next = dwrap
-				tail = tail.Next
-			} else {
-				head = dwrap
-				tail = head
-			}
-			buckets[key] = wrap
+			buckets[key] = extensions.ListBuilder(list.Value)
 		}
 	}
-	return head
+	builder := extensions.ListBuilder()
+	for _, v := range buckets {
+		builder.Push(v.List())
+	}
+	return builder.List()
 }
 
 func Head(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
@@ -222,8 +211,7 @@ func Range(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 		return gelo.NewList(n)
 	}
 	n, _ := gelo.NewNumberFromGo(a)
-	head := &gelo.List{n, nil}
-	tail := head
+	list := extensions.ListBuilder(n)
 	var cmp func(a, b float64) bool
 	if a < b {
 		cmp = func(a, b float64) bool { return a < b }
@@ -232,91 +220,63 @@ func Range(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 	}
 	for m := a + i; cmp(m, b); m += i {
 		n, _ := gelo.NewNumberFromGo(m)
-		tail.Next = &gelo.List{n, nil}
-		tail = tail.Next
+		list.Push(n)
 	}
-	return head
+	return list.List()
 }
 
 func LReverse(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 	if ac != 1 {
 		gelo.ArgumentError(vm, "lreverse", "list", args)
 	}
-	l := vm.API.ListOrElse(args.Value)
-	var head *gelo.List
-	for ; l != nil; l = l.Next {
-		head = &gelo.List{l.Value, head}
+	in, out := vm.API.ListOrElse(args.Value), extensions.ListBuilder()
+	for ; in != nil; in = in.Next {
+		out.PushFront(in.Value)
 	}
-	return head
+	return out.List()
 }
 
 func Unique(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 	if ac != 1 {
 		gelo.ArgumentError(vm, "uniq", "list", args)
 	}
-	l := vm.API.ListOrElse(args.Value)
-	seen := make(map[string]bool)
-	item := l.Value.Ser().String()
-	seen[item] = true
-	head := &gelo.List{l.Value, nil}
-	tail := head
-	for l = l.Next; l != nil; l = l.Next {
-		item = l.Value.Ser().String()
+	l, list := vm.API.ListOrElse(args.Value), extensions.ListBuilder()
+	for seen := make(map[string]bool); l != nil; l = l.Next {
+		item := l.Value.Ser().String()
 		if !seen[item] {
 			seen[item] = true
-			tail.Next = &gelo.List{l.Value, nil}
-			tail = tail.Next
+			list.Push(l.Value)
 		}
 	}
-	return head
+	return list.List()
 }
 
+//index-of value list
+//returns a list of the indicies of value within list
 func Index_of(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 	if ac != 2 {
 		gelo.ArgumentError(vm, "index-of", "value list", args)
 	}
-	l := vm.API.ListOrElse(args.Next.Value)
-	val, count, multiple := args.Value, float64(0), false
-	var head, tail *gelo.List
-	for ; l != nil; l = l.Next {
+	val := args.Value
+	l, list := vm.API.ListOrElse(args.Next.Value), extensions.ListBuilder()
+	for count := 0; l != nil; l, count = l.Next, count + 1 {
 		if val.Equals(l.Value) {
-			n := gelo.NewNumber(count)
-			if head != nil {
-				tail.Next = &gelo.List{n, nil}
-				tail = tail.Next
-			} else {
-				head = &gelo.List{n, nil}
-				tail = head
-			}
+			list.Push(gelo.NewNumber(float64(count)))
 		}
-		count++
 	}
-	if !multiple && head == nil {
-		return head.Value
-	}
-	return head //may be nil
+	return list.List() //may be the empty list
 }
 
 func Enumerate(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 	if ac != 1 {
 		gelo.ArgumentError(vm, "enumerate", "list", args)
 	}
-	list := vm.API.ListOrElse(args.Value)
-	var head, tail *gelo.List
-	count := -1
-	for ; list != nil; list = list.Next {
-		count++
+	list, builder := vm.API.ListOrElse(args.Value), extensions.ListBuilder()
+	for count := 0; list != nil; list, count = list.Next, count + 1 {
 		n, _ := gelo.NewNumberFromGo(count)
-		i := gelo.NewList(gelo.NewList(n, list.Value))
-		if head != nil {
-			tail.Next = i
-			tail = tail.Next
-		} else {
-			head = i
-			tail = head
-		}
+		builder.Push(gelo.NewList(gelo.NewList(n, list.Value)))
 	}
-	return head
+	return builder.List()
 }
 
 var _every_parser = extensions.MakeOrElseArgParser(

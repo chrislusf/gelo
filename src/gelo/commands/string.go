@@ -65,7 +65,7 @@ func Split(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 		return gelo.EmptyList
 	}
 	list := extensions.ListBuilder()
-	for _, v := range strs[1:] {
+	for _, v := range strs {
 		list.Push(gelo.BytesToSym(v))
 	}
 	return list.List()
