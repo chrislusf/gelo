@@ -285,23 +285,22 @@ var _every_parser = extensions.MakeOrElseArgParser(
 func Every(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 	Args := _every_parser(vm, args)
 	list := vm.API.ListOrElse(Args["list"])
-	cmd := Args["command"]
-	if !possiblyInvokable(cmd) {
-		gelo.TypeMismatch(vm, "invokable", cmd.Type())
+	if list == gelo.EmptyList {
+		return list
 	}
-	_, named := Args["item"]
-	var name gelo.Word
+	cmd := vm.API.InvokableOrElse(Args["command"])
+	name, named := Args["name"]
 	if named {
-		name = Args["name"]
 		if d, there := vm.Ns.DepthOf(name); there && d == 0 {
 			old := vm.Ns.LookupOrElse(name)
 			defer vm.Ns.Set(0, name, old)
-		} else if list != nil {
+		} else {
 			defer vm.Ns.Del(name)
 		}
 	}
 	return list.Map(func(w gelo.Word) gelo.Word {
 		if named {
+			//assuming cmd isn't going wonky with the ns forks
 			vm.Ns.Set(0, name, w)
 		}
 		return vm.API.InvokeCmdOrElse(cmd, gelo.NewList(w))
@@ -314,10 +313,8 @@ var _some_parser = extensions.MakeOrElseArgParser(
 func Some(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 	Args := _some_parser(vm, args)
 	list := vm.API.ListOrElse(Args["list"])
-	_, named := Args["item"]
-	var name gelo.Word
+	name, named := Args["name"]
 	if named {
-		name = vm.API.SymbolOrElse(Args["name"])
 		if d, there := vm.Ns.DepthOf(name); there && d == 0 {
 			old := vm.Ns.LookupOrElse(name)
 			defer vm.Ns.Set(0, name, old)
@@ -325,11 +322,8 @@ func Some(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 			defer vm.Ns.Del(name)
 		}
 	}
-	cmd := Args["command"]
-	if !possiblyInvokable(cmd) {
-		gelo.TypeMismatch(vm, "invokable", cmd.Type())
-	}
-	var head, tail *gelo.List
+	cmd := vm.API.InvokableOrElse(Args["command"])
+	builder := extensions.ListBuilder()
 	for ; list != nil; list = list.Next {
 		v := list.Value
 		if named {
@@ -337,16 +331,10 @@ func Some(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 		}
 		val := vm.API.InvokeCmdOrElse(cmd, gelo.NewList(v))
 		if b, ok := val.(gelo.Bool); ok && b.True() {
-			if head != nil {
-				tail.Next = &gelo.List{v, nil}
-				tail = tail.Next
-			} else {
-				head = &gelo.List{v, nil}
-				tail = head
-			}
+			builder.Push(v)
 		}
 	}
-	return head
+	return builder.List()
 }
 
 var _reduce_parser = extensions.MakeOrElseArgParser(
@@ -355,10 +343,7 @@ var _reduce_parser = extensions.MakeOrElseArgParser(
 func Reduce(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 	Args := _reduce_parser(vm, args)
 	list := vm.API.ListOrElse(Args["list"])
-	cmd := Args["command"]
-	if !possiblyInvokable(cmd) {
-		gelo.TypeMismatch(vm, "invokable", cmd.Type())
-	}
+	cmd := vm.API.InvokableOrElse(Args["command"])
 	_, named := Args["items"]
 	var left, right gelo.Word
 	if named {
@@ -390,7 +375,7 @@ func Reduce(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 			vm.Ns.Set(0, left, acc)
 			vm.Ns.Set(0, right, v)
 		}
-		acc = vm.API.InvokeCmdOrElse(cmd, gelo.NewList(acc, v))
+		acc = vm.API.InvokeOrElse(gelo.NewList(cmd, acc, v))
 	}
 	return acc
 }
@@ -404,22 +389,16 @@ func Intersect(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 	if left == nil || right == nil {
 		return gelo.EmptyList
 	}
-	var head, tail *gelo.List
+	list := extensions.ListBuilder()
 	for ; left != nil; left = left.Next {
 		v := left.Value
 		for r := right; r != nil; r = r.Next {
 			if v.Equals(r.Value) {
-				if head != nil {
-					tail.Next = &gelo.List{v, nil}
-					tail = tail.Next
-				} else {
-					head = &gelo.List{v, nil}
-					tail = head
-				}
+				list.Push(v)
 			}
 		}
 	}
-	return head
+	return list.List()
 }
 
 var _comp_parser = extensions.MakeOrElseArgParser("list1 'wrt list2")
@@ -428,7 +407,7 @@ func Complement_of(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 	Args := _comp_parser(vm, args)
 	A := vm.API.ListOrElse(Args["list1"])
 	B := vm.API.ListOrElse(Args["list2"])
-	var head, tail *gelo.List
+	list := extensions.ListBuilder()
 	seen := make(map[string]bool)
 	for ; B != nil; B = B.Next {
 		v := B.Value
@@ -442,17 +421,11 @@ func Complement_of(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 				break
 			}
 			if a.Next == nil { //made it through without hitting anything
-				if head != nil {
-					tail.Next = &gelo.List{v, nil}
-					tail = tail.Next
-				} else {
-					head = &gelo.List{v, nil}
-					tail = head
-				}
+				list.Push(v)
 			}
 		}
 	}
-	return head
+	return list.List()
 }
 
 func Sym_diff(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
@@ -477,31 +450,19 @@ func Sym_diff(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 		v := B.Value
 		Bm[v.Ser().String()] = v
 	}
-	var head, tail *gelo.List
+	list := extensions.ListBuilder()
 	for k, v := range Am {
 		if _, ok := Bm[k]; ok { //in both
 			Bm[k] = v, false //delete
 		} else {
-			if head != nil {
-				tail.Next = &gelo.List{v, nil}
-				tail = tail.Next
-			} else {
-				head = &gelo.List{v, nil}
-				tail = head
-			}
+			list.Push(v)
 		}
 	}
 	//we've removed everything in intersect(A, B)
 	for _, v := range Bm {
-		if head != nil {
-			tail.Next = &gelo.List{v, nil}
-			tail = tail.Next
-		} else { //in case A was a subset of B
-			head = &gelo.List{v, nil}
-			tail = head
-		}
+		list.Push(v)
 	}
-	return head
+	return list.List()
 }
 
 func Subseqp(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
@@ -583,15 +544,12 @@ func LSort(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 	}
 	s := &_warray{make(map[int][]byte), perms, o, length}
 	sort.Sort(s)
-	fst, _ := gelo.NewNumberFromGo(s.perms[0])
-	head := &gelo.List{fst, nil}
-	tail := head
-	for _, v := range s.perms[1:] {
+	list := extensions.ListBuilder()
+	for _, v := range s.perms {
 		p, _ := gelo.NewNumberFromGo(v)
-		tail.Next = &gelo.List{p, nil}
-		tail = tail.Next
+		list.Push(p)
 	}
-	return head
+	return list.List()
 }
 
 func Empty_listp(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
