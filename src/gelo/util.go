@@ -192,7 +192,6 @@ func SlurpWS(s []byte, pos int) int {
 	panic("SlurpWS in impossible state") //Issue 65
 }
 
-//TODO document mappings since it blows up on failure
 func Convert(item interface{}) Word {
 	var word Word
 	word, ok := NewNumberFromGo(item) //easier to check this first

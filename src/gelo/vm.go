@@ -287,7 +287,12 @@ func (vm *VM) ReadSlice(name string) ([]Word, bool) {
 	if !ok {
 		return nil, false
 	}
-	return s.Slice(), true //TODO copies twice
+	//we don't call (*List).Slice() since that would copy everything again
+	slice := make([]Word, s.Len())
+	for i := 0; s != nil; s, i = s.Next, i + 1 {
+		slice[i] = s.Value
+	}
+	return slice, true
 }
 
 func (vm *VM) ReadQuote(name string) (Quote, bool) {
