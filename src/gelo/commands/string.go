@@ -64,13 +64,11 @@ func Split(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 	if len(strs) == 0 {
 		return gelo.EmptyList
 	}
-	head := &gelo.List{gelo.BytesToSym(strs[0]), nil}
-	tail := head
+	list := extensions.ListBuilder()
 	for _, v := range strs[1:] {
-		tail.Next = &gelo.List{gelo.BytesToSym(v), nil}
-		tail = tail.Next
+		list.Push(gelo.BytesToSym(v))
 	}
-	return head
+	return list.List()
 }
 
 var _join_parser = extensions.MakeOrElseArgParser("list ['with sep]?")
@@ -114,15 +112,13 @@ func ToRunes(_ *gelo.VM, args *gelo.List, _ uint) gelo.Word {
 		if len(is) == 0 {
 			return gelo.EmptyList
 		}
-		n, _ := gelo.NewNumberFromGo(is[0])
-		head := &gelo.List{n, nil}
-		tail := head
-		for _, v := range is[1:] {
+		list := extensions.ListBuilder()
+		var n *gelo.Number
+		for _, v := range is {
 			n, _ = gelo.NewNumberFromGo(v)
-			tail.Next = &gelo.List{n, nil}
-			tail = tail.Next
+			list.Push(n)
 		}
-		return head
+		return list.List()
 	})
 }
 
@@ -196,13 +192,11 @@ func StrToList(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 		if len(bs) == 0 {
 			return gelo.Null
 		}
-		head := &gelo.List{gelo.BytesToSym(bs[0:1]), nil}
-		tail := head
-		for i, _ := range bs[1:] {
-			tail.Next = &gelo.List{gelo.BytesToSym(bs[i : i+1]), nil}
-			tail = tail.Next
+		list := extensions.ListBuilder()
+		for i, _ := range bs {
+			list.Push(gelo.BytesToSym(bs[i : i+1]))
 		}
-		return head
+		return list.List()
 	})
 }
 
