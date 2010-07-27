@@ -84,7 +84,7 @@ func load(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 			llines.Read(buffer)
 		}
 	}
-	for line := range llines.Iter() {
+	for _, line := range *llines.lines {
 		history.Push(line)
 	}
 	return gelo.Null
@@ -101,7 +101,7 @@ func save(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 		return gelo.StrToSym(
 			"Could not open file " + fname + "\n" + err.String())
 	}
-	for line := range history.Iter() {
+	for _, line := range history {
 		if _, err := file.WriteString(line); err != nil {
 			println("Error writing file\n" + err.String())
 			return gelo.Null
@@ -241,7 +241,7 @@ func replay(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 	}
 	metainvoke = false
 	defer func() { metainvoke = true }()
-	for line := range lines.Iter() {
+	for _, line := range *lines {
 		play(vm, line)
 	}
 	return gelo.Null
@@ -253,7 +253,7 @@ func cut(vm *gelo.VM, args *gelo.List, _ uint) gelo.Word {
 }
 
 func see(vm *gelo.VM, args *gelo.List, _ uint) gelo.Word {
-	for line := range history.Slice(_make_slice(vm, "see", args)).Iter() {
+	for line := range *history.Slice(_make_slice(vm, "see", args)) {
 		print(line)
 	}
 	return gelo.Null
@@ -399,7 +399,6 @@ func init() {
 		acc.Push("\t" + k)
 	}
 	acc.Push("\tlist")
-	list := acc.Data()
 
 	dollar_map["list"] = command{
 		"list\n\tList all interpreter commands",
@@ -408,7 +407,7 @@ func init() {
 				metahelp("list")
 			}
 			println("$$ responds to the following commands:")
-			for _, v := range list {
+			for _, v := range acc {
 				println(v.(string))
 			}
 			return gelo.Null
@@ -459,9 +458,9 @@ func (r *Readline) IsComplete() bool {
 	return !r.literal && !r.star && r.clause == 0 && r.quote == 0
 }
 
-func (r *Readline) Iter() <-chan string {
-	return r.lines.Iter()
-}
+//func (r *Readline) Iter() <-chan string {
+//	return r.lines.Iter()
+//}
 
 func (r *Readline) Read(p []byte) (n int, _ os.Error) {
 	for i, c := range p {
@@ -595,7 +594,7 @@ func main() {
 				break
 			}
 		}
-		for lline := range llines.Iter() {
+		for _, lline := range *llines.lines {
 			play(vm, lline)
 		}
 		//there's a semilegitimate reason we check this twice instead of

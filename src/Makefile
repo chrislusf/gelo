@@ -1,4 +1,5 @@
 
+include $(GOROOT)/src/Make.$(GOARCH)
 
 all: pkgs tools
 
@@ -11,7 +12,7 @@ tools: pkgs
 	cd tools; make install
 
 nuke:
-	rm -f *.8 run
+	rm -f *.$(O) run
 	cd tools; make nuke
 	cd gelo; make nuke
 	cd gelo/extensions; make nuke
