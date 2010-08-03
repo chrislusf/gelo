@@ -14,7 +14,7 @@ func BI_eval(vm *VM, args *List, ac uint) (ret Word) {
 			case halt_control_code:
 				ret = (*List)(t)
 			case Error:
-				ret = x.(Error)
+				ret = t
 			}
 		}
 	}()

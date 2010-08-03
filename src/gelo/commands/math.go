@@ -329,6 +329,7 @@ var MathCommands = map[string]interface{}{
 	"min":    Min,
 	"max":    Max,
 	"abs":    Abs,
+	"sgn":    Sgn,
 	"neg":    Neg,
 	//predicates
 	"integer?":  Integerp,

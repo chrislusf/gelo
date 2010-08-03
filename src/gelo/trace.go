@@ -100,12 +100,11 @@ func _format_trace(kind string, all []interface{}) *buffer {
 func _tracer(req _trace, kind string, all []interface{}) {
 	_tracer_mutex.RLock()
 	defer _tracer_mutex.RUnlock()
-	if _the_tracer == nil {
-		return
-	}
 	if _level&req != 0 {
 		tr := _format_trace(kind, all).Symbol()
-		_the_tracer.Send(tr)
+		if _the_tracer != nil {
+			_the_tracer.Send(tr)
+		}
 		if _the_log != nil {
 			_the_log.Log(tr)
 		}
