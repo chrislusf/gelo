@@ -11,7 +11,7 @@ type Regexp struct {
 	source gelo.Symbol
 }
 
-func (_ *Regexp) Type() gelo.Symbol {
+func (*Regexp) Type() gelo.Symbol {
 	return gelo.StrToSym("*REGULAR-EXPRESSION*")
 }
 
@@ -70,9 +70,8 @@ func Re_matches(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 	}
 	r := ReOrElse(vm, args.Value)
 	s := args.Next.Value.Ser().Bytes()
-	matches := r.regexp.MatchSlices(s)
 	list := extensions.ListBuilder()
-	for _, v := range matches {
+	for _, v := range r.regexp.FindSubmatch(s) {
 		list.Push(gelo.BytesToSym(v))
 	}
 	return list.List()

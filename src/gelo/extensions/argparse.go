@@ -202,7 +202,7 @@ func (pp *__arg_parserparser) _next() {
 	}
 	switch ch {
 	case '\\':
-		pp._next()
+		pp._next() //This is severly broken, what was I thinking?
 		if pp.ch == _eoi {
 			gelo.SyntaxError("Attempted to escape end of input")
 		}

@@ -4,8 +4,11 @@ import (
 	"os"
 	"math"
 	"time"
+
+	"image"
 	"exp/draw"
 	"exp/draw/x11"
+
 	"gelo"
 	"gelo/commands"
 	"gelo/extensions"
@@ -37,18 +40,19 @@ func line(img draw.Image, x0, y0, x1, y1 int) {
 		x0, x1 = x1, x0
 		y0, y1 = y1, y0
 	}
-	dx, dy := x1-x0, abs(y1-y0)
+	dx, dy := x1 - x0, abs(y1 - y0)
 	err, derr := 0.0, float(dy)/float(dx)
 	y, ystep := y0, 1
 	if y1 <= y0 {
 		ystep = -1
 	}
+	B := img.Bounds()
 	for x := x0; x <= x1; x++ {
-		if x >= 0 && x < img.Width() && y >= 0 && y < img.Height() {
+		if x >= B.Min.X && x < B.Max.X && y >= B.Min.Y && y < B.Max.Y {
 			if steep {
-				img.Set(y, x, draw.Black)
+				img.Set(y, x, image.Black)
 			} else {
-				img.Set(x, y, draw.Black)
+				img.Set(x, y, image.Black)
 			}
 		}
 		err += derr
@@ -83,12 +87,12 @@ func graphics_server(ctx draw.Context) {
 	image := ctx.Screen()
 	//we foolishly assume that the window will never be resized
 	var (
-		w   int = image.Width()
-		h   = image.Height()
-		x0  = w / 2
-		y0  = h / 2
-		x   = x0
-		y   = y0
+		w   int     = image.Bounds().Max.X
+		h           = image.Bounds().Max.Y
+		x0          = w / 2
+		y0          = h / 2
+		x           = x0
+		y           = y0
 		ang float64 = 0
 		pen bool    = true
 	)
@@ -103,7 +107,7 @@ func graphics_server(ctx draw.Context) {
 		case down:
 			pen = true
 		case rotate:
-			ang = math.Fmod(cmd.value+ang, 360)
+			ang = math.Fmod(cmd.value + ang, 360)
 		case forward:
 			sx, sy := x, y
 			sin, cos := math.Sincos(ang * math.Pi / 180)
@@ -130,7 +134,8 @@ func graphics_server(ctx draw.Context) {
 
 func clear_screen(ctx draw.Context) draw.Image {
 	s := ctx.Screen()
-	draw.Draw(s, draw.Rect(0, 0, s.Width(), s.Height()), draw.White, draw.ZP)
+	B := s.Bounds().Max
+	draw.Draw(s, image.Rect(0, 0, B.X, B.Y), image.White, image.ZP)
 	ctx.FlushImage()
 	return s
 }
@@ -206,25 +211,27 @@ func main() {
 	context, err := x11.NewWindow()
 	check("Could not create window", err)
 
-	vm.Register("W", int(context.Screen().Width()/2))
-	vm.Register("H", int(context.Screen().Height()/2))
-	vm.Register("reset", Nullary(reset))
-	vm.Register("clear", Nullary(clear))
-	vm.Register("up", Nullary(up))
-	vm.Register("down", Nullary(down))
-	vm.Register("rotate", Unary(rotate))
+	vm.Register("W",       int(context.Screen().Bounds().Max.X / 2))
+	vm.Register("H",       int(context.Screen().Bounds().Max.Y / 2))
+	vm.Register("reset",   Nullary(reset))
+	vm.Register("clear",   Nullary(clear))
+	vm.Register("up",      Nullary(up))
+	vm.Register("down",    Nullary(down))
+	vm.Register("rotate",  Unary(rotate))
 	vm.Register("forward", Unary(forward))
-	vm.Register("get-x", Get(getx))
-	vm.Register("get-y", Get(gety))
-	vm.Register("angle", Get(getang))
-	vm.Register("pen-up?", func(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
-		if ac != 0 {
-			gelo.ArgumentError(vm, "turtle", "", args)
-		}
-		gchan <- &gcom{ispenup, 0}
-		v := (<-gchan).value
-		return gelo.ToBool(v == 1)
-	})
+	vm.Register("get-x",   Get(getx))
+	vm.Register("get-y",   Get(gety))
+	vm.Register("angle",   Get(getang))
+	vm.Register("pen-up?",
+		func(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
+			if ac != 0 {
+				gelo.ArgumentError(vm, "turtle", "", args)
+			}
+			gchan <- &gcom{ispenup, 0}
+			v := (<-gchan).value
+			return gelo.ToBool(v == 1)
+		},
+	)
 
 	turtle_prelude, err := os.Open("turtle.prelude.gel", os.O_RDONLY, 0664)
 	defer turtle_prelude.Close()
@@ -243,5 +250,13 @@ func main() {
 	_, err = vm.Run(file, os.Args[2:])
 	check("===ERROR===", err)
 
-	<-context.QuitChan() //XXX this does not actually let the program quit
+	E := context.EventChan()
+	for {
+		e := <-E
+		//for some reason I always get a KeyEvent with this mysterious
+		//magic number
+		if k, ok := e.(draw.KeyEvent); ok && k.Key != -65293 {
+			break
+		}
+	}
 }
