@@ -51,7 +51,7 @@ outer:
 				break
 			}
 			//in case m < len(lr.scratch)
-			lr.scratch = lr.scratch[0:m]
+			lr.scratch = lr.scratch[:m]
 			lr.start, lr.first = 0, false
 		}
 		//push out what we can from scratch

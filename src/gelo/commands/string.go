@@ -134,7 +134,7 @@ func FromRunes(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 			gelo.TypeMismatch(vm, "rune", "number")
 		}
 		length := utf8.EncodeRune(int(i), bucket)
-		buf.Write(bucket[0:length])
+		buf.Write(bucket[:length])
 	}
 	return gelo.BytesToSym(buf.Bytes())
 }

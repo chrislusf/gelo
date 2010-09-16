@@ -26,7 +26,7 @@ func (r *_recordingReader) Read(p []byte) (n int, err os.Error) {
 	if err != nil {
 		return
 	}
-	r.buf.Write(p[0:n])
+	r.buf.Write(p[:n])
 	return
 }
 

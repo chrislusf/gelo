@@ -79,7 +79,7 @@ func load(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 	n := 0
 	for err == nil {
 		n, err = file.Read(buffer)
-		buffer = buffer[0:n]
+		buffer = buffer[:n]
 		if n > 0 {
 			llines.Read(buffer)
 		}
@@ -139,11 +139,11 @@ func _foreshorten(line string) string {
 	out := line
 	for i, c := range line {
 		if (c == '\n' && i+1 != len(line)) || i > 70 {
-			out = strings.TrimRightFunc(line[0:i], unicode.IsSpace) + "..."
+			out = strings.TrimRightFunc(line[:i], unicode.IsSpace) + "..."
 			break
 		} else if c == '\n' {
 			//last is newline
-			out = line[0:i]
+			out = line[:i]
 		}
 	}
 	return out
