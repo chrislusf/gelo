@@ -40,7 +40,7 @@ func line(img draw.Image, x0, y0, x1, y1 int) {
 		x0, x1 = x1, x0
 		y0, y1 = y1, y0
 	}
-	dx, dy := x1 - x0, abs(y1 - y0)
+	dx, dy := x1-x0, abs(y1-y0)
 	err, derr := 0.0, float(dy)/float(dx)
 	y, ystep := y0, 1
 	if y1 <= y0 {
@@ -83,16 +83,16 @@ type gcom struct {
 
 var gchan chan *gcom
 
-func graphics_server(ctx draw.Context) {
+func graphics_server(ctx draw.Window) {
 	image := ctx.Screen()
 	//we foolishly assume that the window will never be resized
 	var (
-		w   int     = image.Bounds().Max.X
-		h           = image.Bounds().Max.Y
-		x0          = w / 2
-		y0          = h / 2
-		x           = x0
-		y           = y0
+		w   int = image.Bounds().Max.X
+		h   = image.Bounds().Max.Y
+		x0  = w / 2
+		y0  = h / 2
+		x   = x0
+		y   = y0
 		ang float64 = 0
 		pen bool    = true
 	)
@@ -107,7 +107,7 @@ func graphics_server(ctx draw.Context) {
 		case down:
 			pen = true
 		case rotate:
-			ang = math.Fmod(cmd.value + ang, 360)
+			ang = math.Fmod(cmd.value+ang, 360)
 		case forward:
 			sx, sy := x, y
 			sin, cos := math.Sincos(ang * math.Pi / 180)
@@ -132,7 +132,7 @@ func graphics_server(ctx draw.Context) {
 	}
 }
 
-func clear_screen(ctx draw.Context) draw.Image {
+func clear_screen(ctx draw.Window) draw.Image {
 	s := ctx.Screen()
 	B := s.Bounds().Max
 	draw.Draw(s, image.Rect(0, 0, B.X, B.Y), image.White, image.ZP)
@@ -141,7 +141,7 @@ func clear_screen(ctx draw.Context) draw.Image {
 }
 
 
-func flusher(ctx draw.Context) {
+func flusher(ctx draw.Window) {
 	t := time.NewTicker(1e9 / 50)
 	for {
 		<-t.C
@@ -211,17 +211,17 @@ func main() {
 	context, err := x11.NewWindow()
 	check("Could not create window", err)
 
-	vm.Register("W",       int(context.Screen().Bounds().Max.X / 2))
-	vm.Register("H",       int(context.Screen().Bounds().Max.Y / 2))
-	vm.Register("reset",   Nullary(reset))
-	vm.Register("clear",   Nullary(clear))
-	vm.Register("up",      Nullary(up))
-	vm.Register("down",    Nullary(down))
-	vm.Register("rotate",  Unary(rotate))
+	vm.Register("W", int(context.Screen().Bounds().Max.X/2))
+	vm.Register("H", int(context.Screen().Bounds().Max.Y/2))
+	vm.Register("reset", Nullary(reset))
+	vm.Register("clear", Nullary(clear))
+	vm.Register("up", Nullary(up))
+	vm.Register("down", Nullary(down))
+	vm.Register("rotate", Unary(rotate))
 	vm.Register("forward", Unary(forward))
-	vm.Register("get-x",   Get(getx))
-	vm.Register("get-y",   Get(gety))
-	vm.Register("angle",   Get(getang))
+	vm.Register("get-x", Get(getx))
+	vm.Register("get-y", Get(gety))
+	vm.Register("angle", Get(getang))
 	vm.Register("pen-up?",
 		func(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 			if ac != 0 {
