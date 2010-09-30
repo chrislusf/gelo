@@ -45,7 +45,9 @@ func programmerError(vm *VM, s ...interface{}) {
 //note a system error is not a word and should only be called if the impossible
 //to recover from occurs
 func systemError(vm *VM, s ...interface{}) {
-	panic(_errSystem{_make_errorM(vm, s, `
+	x := make([]interface{}, len(s)+1)
+	copy(x, s)
+	x[len(x)-1] = `
 If you are reading this, you have discovered a bug in Gelo, a  and not the
 program that you are using.
 Please see if this has been reported at:
@@ -56,7 +58,8 @@ and if not report the error there, so that we may fix it, before notifying the
 owners of the application that you are using of the error.
 
 Thank you for your time and the Gelo team deeply apologizes for the inconvience.
-`)})
+`
+	panic(_errSystem{_make_errorM(vm, x...)})
 }
 
 func SyntaxError(s ...interface{}) {

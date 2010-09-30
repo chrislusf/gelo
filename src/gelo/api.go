@@ -7,7 +7,7 @@ type api struct {
 }
 
 func (*api) Trace(message ...interface{}) {
-	alien_trace(message)
+	alien_trace(message...)
 }
 
 func (p *api) Halt(info *List) {
