@@ -8,8 +8,8 @@ import (
 )
 
 var (
-	Stdio  = &_stdio{bufio.NewReader(os.Stdin)}
-	Stderr = &_stderr{}
+	Stdio  gelo.Port = &_stdio{bufio.NewReader(os.Stdin)}
+	Stderr gelo.Port = &_stderr{}
 )
 
 type _stdio struct {

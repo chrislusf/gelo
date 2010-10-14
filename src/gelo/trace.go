@@ -1,7 +1,6 @@
 package gelo
 
 import "fmt"
-import "log"
 import "sync"
 
 type _trace byte
@@ -18,7 +17,6 @@ const All_traces = Alien_trace | Runtime_trace | System_trace | Parser_trace
 //global tracer
 var _tracer_mutex sync.RWMutex
 var _the_tracer Port
-var _the_log *log.Logger
 var _level _trace
 
 func SetTracer(p Port) Port {
@@ -26,14 +24,6 @@ func SetTracer(p Port) Port {
 	_tracer_mutex.Lock()
 	defer _tracer_mutex.Unlock()
 	_the_tracer = p
-	return old
-}
-
-func SetTracerLogger(l *log.Logger) *log.Logger {
-	old := _the_log
-	_tracer_mutex.Lock()
-	defer _tracer_mutex.Unlock()
-	_the_log = l
 	return old
 }
 
@@ -104,9 +94,6 @@ func _tracer(req _trace, kind string, all []interface{}) {
 		tr := _format_trace(kind, all).Symbol()
 		if _the_tracer != nil {
 			_the_tracer.Send(tr)
-		}
-		if _the_log != nil {
-			_the_log.Log(tr)
 		}
 	}
 }

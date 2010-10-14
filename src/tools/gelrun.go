@@ -104,8 +104,6 @@ func main() {
 	vm := gelo.NewVM(extensions.Stdio)
 	defer vm.Destroy()
 
-	gelo.SetTracer(extensions.Stderr)
-
 	vm.RegisterBundle(gelo.Core)
 	vm.RegisterBundles(commands.All)
 
@@ -132,15 +130,20 @@ func main() {
 		}
 	}
 
+	tracer := extensions.Stderr
+
 	if *logit {
 		out, err := os.Open(flag.Arg(0)+".log", os.O_WRONLY|os.O_CREATE,
 			0664)
 		defer out.Close()
 		check("Could not create log file", err)
-		gelo.SetTracerLogger(log.New(out, nil, "", log.Lok))
+		logger := extensions.Logger(out, log.Ldate|log.Ltime)
+		tracer = extensions.Tee(tracer, logger)
 	}
 
-	if *trace {
+	gelo.SetTracer(tracer)
+
+	if *trace || *logit {
 		gelo.TraceOn(gelo.All_traces)
 	}
 
