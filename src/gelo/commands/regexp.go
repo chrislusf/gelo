@@ -7,8 +7,7 @@ import (
 )
 
 type Regexp struct {
-	regexp *regexp.Regexp
-	source gelo.Symbol
+	*regexp.Regexp
 }
 
 func (*Regexp) Type() gelo.Symbol {
@@ -16,7 +15,7 @@ func (*Regexp) Type() gelo.Symbol {
 }
 
 func (r *Regexp) Ser() gelo.Symbol {
-	return r.source
+	return gelo.StrToSym(r.String())
 }
 
 func (r *Regexp) Copy() gelo.Word {
@@ -27,12 +26,14 @@ func (r *Regexp) DeepCopy() gelo.Word {
 	return r
 }
 
+//Note that this only tests the equality of the stated regular expression and
+//does not attempt to see if two differently written RE's are equivalent.
 func (r *Regexp) Equals(w gelo.Word) bool {
 	r2, ok := w.(*Regexp)
 	if !ok {
 		return false
 	}
-	return r2.source.Equals(r.source) //XXX not perfect but close enough
+	return r.String() == r2.String()
 }
 
 func ReOrElse(vm *gelo.VM, w gelo.Word) *Regexp {
@@ -52,7 +53,7 @@ func ReCon(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 	if err != nil {
 		gelo.SyntaxError(vm, err.String())
 	}
-	return &Regexp{rex, gelo.BytesToSym(spec)}
+	return &Regexp{rex}
 }
 
 func Re_matchp(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
@@ -61,7 +62,7 @@ func Re_matchp(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 	}
 	r := ReOrElse(vm, args.Value)
 	s := args.Next.Value.Ser().Bytes()
-	return gelo.ToBool(r.regexp.Match(s))
+	return gelo.ToBool(r.Match(s))
 }
 
 func Re_matches(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
@@ -71,7 +72,7 @@ func Re_matches(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 	r := ReOrElse(vm, args.Value)
 	s := args.Next.Value.Ser().Bytes()
 	list := extensions.ListBuilder()
-	for _, v := range r.regexp.FindSubmatch(s) {
+	for _, v := range r.FindSubmatch(s) {
 		list.Push(gelo.BytesToSym(v))
 	}
 	return list.List()
@@ -84,7 +85,7 @@ func Re_replace(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 	r := ReOrElse(vm, args.Value)
 	src := args.Next.Value.Ser().Bytes()
 	repl := args.Next.Next.Value.Ser().Bytes()
-	return gelo.BytesToSym(r.regexp.ReplaceAll(src, repl))
+	return gelo.BytesToSym(r.ReplaceAll(src, repl))
 }
 
 func Re_replace_by(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
@@ -94,7 +95,7 @@ func Re_replace_by(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 	r := ReOrElse(vm, args.Value)
 	src := args.Next.Value.Ser().Bytes()
 	repl := args.Next.Next.Value
-	return gelo.BytesToSym(r.regexp.ReplaceAllFunc(src, func(s []byte) []byte {
+	return gelo.BytesToSym(r.ReplaceAllFunc(src, func(s []byte) []byte {
 		args := gelo.NewList(gelo.BytesToSym(s))
 		return vm.API.InvokeCmdOrElse(repl, args).Ser().Bytes()
 	}))
