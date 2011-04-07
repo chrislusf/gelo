@@ -1,35 +1,34 @@
 package gelo
 
 type Chan struct {
-	c chan Word
+	C      chan Word
+	closed bool
 }
 
 func NewChan() Port {
-	return &Chan{make(chan Word)}
+	return &Chan{C: make(chan Word)}
 }
 
 func (c *Chan) Send(w Word) {
-	c.c <- w.DeepCopy()
+	c.C <- w.DeepCopy()
 }
 
-func (c *Chan) Recv() Word {
-	w := <-c.c
-	if w == nil { //XXX
-		if _, ok := w.(*List); ok {
-			return EmptyList
-		}
-		//otherwise the channel has been closed
+func (c *Chan) Recv() (w Word) {
+	w, c.closed = <-c.C
+	if c.closed {
 		return Null
+	} else if w == nil {
+		return EmptyList
 	}
 	return w.DeepCopy()
 }
 
 func (c *Chan) Close() {
-	close(c.c)
+	close(c.C)
 }
 
 func (c *Chan) Closed() bool {
-	return closed(c.c)
+	return c.closed
 }
 
 func (c *Chan) Ser() Symbol {
@@ -49,7 +48,7 @@ func (c *Chan) Equals(w Word) bool {
 	if !ok {
 		return false
 	}
-	return oc.c == c.c
+	return oc.C == c.C
 }
 
 func (c *Chan) Type() Symbol {

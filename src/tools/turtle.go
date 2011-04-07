@@ -41,7 +41,7 @@ func line(img draw.Image, x0, y0, x1, y1 int) {
 		y0, y1 = y1, y0
 	}
 	dx, dy := x1-x0, abs(y1-y0)
-	err, derr := 0.0, float(dy)/float(dx)
+	err, derr := 0.0, float64(dy)/float64(dx)
 	y, ystep := y0, 1
 	if y1 <= y0 {
 		ystep = -1
