@@ -190,7 +190,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	file, err := os.Open(os.Args[1], os.O_RDONLY, 0664)
+	file, err := os.Open(os.Args[1])
 	check("Could not open script", err)
 
 	vm := gelo.NewVM(extensions.Stdio)
@@ -201,7 +201,7 @@ func main() {
 	vm.RegisterBundle(gelo.Core)
 	vm.RegisterBundles(commands.All)
 
-	prelude, err := os.Open("prelude.gel", os.O_RDONLY, 0664)
+	prelude, err := os.Open("prelude.gel")
 	defer prelude.Close()
 	check("Could not open prelude", err)
 
@@ -233,7 +233,7 @@ func main() {
 		},
 	)
 
-	turtle_prelude, err := os.Open("turtle.prelude.gel", os.O_RDONLY, 0664)
+	turtle_prelude, err := os.Open("turtle.prelude.gel")
 	defer turtle_prelude.Close()
 	check("Could not open turtle prelude", err)
 

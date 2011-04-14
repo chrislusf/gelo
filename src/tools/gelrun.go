@@ -108,7 +108,7 @@ func main() {
 	vm.RegisterBundles(commands.All)
 
 	if !*no_prelude {
-		prelude, err := os.Open("prelude.gel", os.O_RDONLY, 0664)
+		prelude, err := os.Open("prelude.gel")
 		defer prelude.Close()
 		check("Could not open prelude.gel", err)
 
@@ -116,7 +116,7 @@ func main() {
 		check("Could not load prelude", err)
 	}
 
-	file, err := os.Open(file_name, os.O_RDONLY, 0664)
+	file, err := os.Open(file_name)
 	defer file.Close()
 	check("Could not open: "+file_name, err)
 	reader := io.Reader(file)
@@ -133,8 +133,7 @@ func main() {
 	tracer := extensions.Stderr
 
 	if *logit {
-		out, err := os.Open(flag.Arg(0)+".log", os.O_WRONLY|os.O_CREATE,
-			0664)
+		out, err := os.Create(flag.Arg(0) + ".log")
 		defer out.Close()
 		check("Could not create log file", err)
 		logger := extensions.Logger(out, log.Ldate|log.Ltime)

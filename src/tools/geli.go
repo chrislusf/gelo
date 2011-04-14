@@ -44,7 +44,7 @@ func run(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 		return metahelp("run")
 	}
 	fname := args.Value.Ser().String()
-	file, err := os.Open(fname, os.O_RDONLY, 0666)
+	file, err := os.Open(fname)
 	defer file.Close()
 	if err != nil {
 		return gelo.StrToSym(
@@ -67,7 +67,7 @@ func load(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 		return metahelp("load")
 	}
 	fname := args.Value.Ser().String()
-	file, err := os.Open(fname, os.O_RDONLY, 0666)
+	file, err := os.Open(fname)
 	defer file.Close()
 	if err != nil {
 		return gelo.StrToSym(
@@ -95,7 +95,7 @@ func save(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 		return metahelp("save")
 	}
 	fname := args.Value.Ser().String()
-	file, err := os.Open(fname, os.O_WRONLY|os.O_CREATE, 0664)
+	file, err := os.OpenFile(fname, os.O_WRONLY|os.O_CREATE, 0664)
 	defer file.Close()
 	if err != nil {
 		return gelo.StrToSym(
@@ -565,7 +565,7 @@ func main() {
 	vm.RegisterBundles(commands.All)
 
 	if !*no_prelude {
-		prelude, err := os.Open("prelude.gel", os.O_RDONLY, 0664)
+		prelude, err := os.Open("prelude.gel")
 		defer prelude.Close()
 		check("Could not open prelude.gel", err)
 
