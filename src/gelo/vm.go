@@ -37,9 +37,12 @@ func (vm *VM) _sanity(msg string) {
 	//if vm == nil we let the usual panic occur
 	if vm.API == nil { //implies vm has been destroyed
 		goto error
-	} else if _, kill := <-vm.kill_switch; kill {
+	}
+	select {
+	case <-vm.kill_switch:
 		vm.Destroy()
 		goto error
+	default:
 	}
 	return
 error:

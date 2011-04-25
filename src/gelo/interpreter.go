@@ -141,7 +141,6 @@ func (vm *VM) eval(script *command, arguments *List) (ret Word) {
 		//handle Noop
 		return Null
 	}
-	var kill bool
 	var c *command
 	for script != nil {
 		//store arguments
@@ -186,8 +185,10 @@ func (vm *VM) eval(script *command, arguments *List) (ret Word) {
 			RuntimeError(vm, "defer call cannot be in tail position")
 		}
 		//before we continue, see if anyone wants to kill us
-		if _, kill = <-vm.kill_switch; kill {
+		select {
+		case <-vm.kill_switch:
 			panic(kill_control_code(byte(0)))
+		default:
 		}
 	}
 	run_trace("evaluation became", ret)

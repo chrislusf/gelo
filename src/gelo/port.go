@@ -14,6 +14,9 @@ func (c *Chan) Send(w Word) {
 }
 
 func (c *Chan) Recv() (w Word) {
+	if c.closed {
+		return Null
+	}
 	w, c.closed = <-c.C
 	if c.closed {
 		return Null
