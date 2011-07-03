@@ -6,8 +6,9 @@ import (
 	"time"
 
 	"image"
-	"exp/draw"
-	"exp/draw/x11"
+	"image/draw"
+	"exp/gui"
+	"exp/gui/x11"
 
 	"gelo"
 	"gelo/commands"
@@ -83,16 +84,16 @@ type gcom struct {
 
 var gchan chan *gcom
 
-func graphics_server(ctx draw.Window) {
+func graphics_server(ctx gui.Window) {
 	image := ctx.Screen()
 	//we foolishly assume that the window will never be resized
 	var (
-		w   int = image.Bounds().Max.X
-		h   = image.Bounds().Max.Y
-		x0  = w / 2
-		y0  = h / 2
-		x   = x0
-		y   = y0
+		w   int     = image.Bounds().Max.X
+		h           = image.Bounds().Max.Y
+		x0          = w / 2
+		y0          = h / 2
+		x           = x0
+		y           = y0
 		ang float64 = 0
 		pen bool    = true
 	)
@@ -132,16 +133,16 @@ func graphics_server(ctx draw.Window) {
 	}
 }
 
-func clear_screen(ctx draw.Window) draw.Image {
+func clear_screen(ctx gui.Window) draw.Image {
 	s := ctx.Screen()
 	B := s.Bounds().Max
-	draw.Draw(s, image.Rect(0, 0, B.X, B.Y), image.White, image.ZP)
+	draw.Draw(s, image.Rect(0, 0, B.X, B.Y), image.White, image.ZP, draw.Src)
 	ctx.FlushImage()
 	return s
 }
 
 
-func flusher(ctx draw.Window) {
+func flusher(ctx gui.Window) {
 	t := time.NewTicker(1e9 / 50)
 	for {
 		<-t.C
@@ -255,7 +256,7 @@ func main() {
 		e := <-E
 		//for some reason I always get a KeyEvent with this mysterious
 		//magic number
-		if k, ok := e.(draw.KeyEvent); ok && k.Key != -65293 {
+		if k, ok := e.(gui.KeyEvent); ok && k.Key != -65293 {
 			break
 		}
 	}
