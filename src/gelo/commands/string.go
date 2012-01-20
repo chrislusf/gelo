@@ -60,7 +60,7 @@ func Split(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 		sep = vm.API.LiteralOrElse(Args["sep"])
 	}
 	str := vm.API.LiteralOrElse(Args["string"])
-	strs := bytes.Split(str, sep, -1)
+	strs := bytes.Split(str, sep)
 	if len(strs) == 0 {
 		return gelo.EmptyList
 	}
