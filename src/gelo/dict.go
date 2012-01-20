@@ -150,7 +150,7 @@ func (d *Dict) Del(name Word) {
 
 func (d *Dict) StrDel(s string) {
 	d.ser = nil
-	d.rep[s] = nil, false
+	delete(d.rep, s)
 }
 
 func (d *Dict) Ser() Symbol {

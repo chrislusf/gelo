@@ -109,7 +109,7 @@ func (vm *VM) Destroy() {
 			//if we grab a reference before the field is set to nil in the
 			//parent, it doesn't matter whether we delete our entry
 			if pm := h.parent.heritage.children; pm != nil {
-				pm[vm.id] = nil, false
+				delete(pm, vm.id)
 			}
 		}
 		//if we spawned any VMs, kill them

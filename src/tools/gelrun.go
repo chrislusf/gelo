@@ -1,20 +1,20 @@
 package main
 
 import (
-	"os"
 	"flag"
-	"log"
-	"io"
 	"gelo"
 	"gelo/commands"
 	"gelo/extensions"
+	"io"
+	"log"
+	"os"
 )
 
 type LiterateReader struct {
 	code, nl, first bool
 	start           int
 	src             io.Reader
-	err             os.Error
+	err             error
 	scratch         []byte
 }
 
@@ -27,7 +27,7 @@ func NewLiterateReader(src io.Reader) *LiterateReader {
 		scratch: make([]byte, 128)}
 }
 
-func (lr *LiterateReader) Read(p []byte) (n int, err os.Error) {
+func (lr *LiterateReader) Read(p []byte) (n int, err error) {
 	//input has been exhausted
 	if lr.scratch == nil {
 		return 0, lr.err
@@ -83,10 +83,10 @@ var logit = flag.Bool("log", false, "log traces (does not activate traces)")
 var lit = flag.Bool("literate", false, "force reading in literate mode")
 var no_prelude = flag.Bool("no-prelude", false, "do not load prelude.gel")
 
-func check(failmsg string, e os.Error) {
+func check(failmsg string, e error) {
 	if e != nil {
 		println(failmsg)
-		println(e.String())
+		println(e.Error())
 		os.Exit(1)
 	}
 }

@@ -1,17 +1,17 @@
 package main
 
 import (
-	"os"
-	"flag"
 	"bufio"
 	"bytes"
-	"strings"
-	"unicode"
-	"regexp"
 	"container/vector"
+	"flag"
 	"gelo"
 	"gelo/commands"
 	"gelo/extensions"
+	"os"
+	"regexp"
+	"strings"
+	"unicode"
 )
 
 //globals and helper functions
@@ -21,10 +21,10 @@ var to_exit, metainvoke bool
 var stdin = bufio.NewReader(os.Stdin)
 var no_prelude = flag.Bool("no-prelude", false, "do not load prelude.gel")
 
-func check(failmsg string, e os.Error) {
+func check(failmsg string, e error) {
 	if e != nil {
 		println(failmsg)
-		println(e.String())
+		println(e.Error())
 		os.Exit(1)
 	}
 }
@@ -48,7 +48,7 @@ func run(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 	defer file.Close()
 	if err != nil {
 		return gelo.StrToSym(
-			"Could not open file " + fname + "\n" + err.String())
+			"Could not open file " + fname + "\n" + err.Error())
 	}
 	ret, err := vm.Run(file, args.Next)
 	if err != nil {
@@ -71,7 +71,7 @@ func load(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 	defer file.Close()
 	if err != nil {
 		return gelo.StrToSym(
-			"Could not open file " + fname + "\n" + err.String())
+			"Could not open file " + fname + "\n" + err.Error())
 	}
 
 	buffer := make([]byte, 4096)
@@ -99,11 +99,11 @@ func save(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 	defer file.Close()
 	if err != nil {
 		return gelo.StrToSym(
-			"Could not open file " + fname + "\n" + err.String())
+			"Could not open file " + fname + "\n" + err.Error())
 	}
 	for _, line := range history {
 		if _, err := file.WriteString(line); err != nil {
-			println("Error writing file\n" + err.String())
+			println("Error writing file\n" + err.Error())
 			return gelo.Null
 		}
 	}
@@ -167,7 +167,7 @@ func search(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 	re, err := regexp.Compile(args.Value.Ser().String())
 	if err != nil {
 		return gelo.StrToSym(
-			"Regex couldn't compile: " + err.String() + "\n" + dollar_map["search"].help)
+			"Regex couldn't compile: " + err.Error() + "\n" + dollar_map["search"].help)
 	}
 	length := history.Len()
 	for i := 0; i < length; i++ {
@@ -462,7 +462,7 @@ func (r *Readline) IsComplete() bool {
 //	return r.lines.Iter()
 //}
 
-func (r *Readline) Read(p []byte) (n int, _ os.Error) {
+func (r *Readline) Read(p []byte) (n int, _ error) {
 	for i, c := range p {
 		if r.first == -1 {
 			switch c {
@@ -547,7 +547,7 @@ func play(vm *gelo.VM, line string) {
 			history.Push(line)
 		}
 	} else {
-		println("Failed with:", err.String())
+		println("Failed with:", err.Error())
 	}
 	metainvoke = false
 }

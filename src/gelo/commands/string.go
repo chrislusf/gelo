@@ -1,12 +1,12 @@
 package commands
 
 import (
+	"bytes"
 	"gelo"
 	"gelo/extensions"
-	"bytes"
-	"unicode"
-	"utf8"
 	"math"
+	"unicode"
+	"unicode/utf8"
 )
 
 func Chars(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {

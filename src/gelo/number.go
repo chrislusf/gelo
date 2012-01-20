@@ -1,8 +1,8 @@
 package gelo
 
 import (
-	"strconv"
 	"math"
+	"strconv"
 )
 
 //Use this for ideal constants
@@ -19,7 +19,7 @@ func NewNumberFromBytes(b []byte) (*Number, bool) {
 }
 
 func NewNumberFromString(s string) (*Number, bool) {
-	num, err := strconv.Atof64(s)
+	num, err := strconv.ParseFloat(s, 64)
 	if err != nil {
 		return nil, false
 	}
@@ -76,7 +76,7 @@ func (n *Number) Real() float64 {
 
 func (n *Number) Int() (int64, bool) {
 	num := n.num
-	if math.IsNaN(num) || math.Fmod(num, 1) != 0 || math.MaxInt64 < num {
+	if math.IsNaN(num) || math.Mod(num, 1) != 0 || math.MaxInt64 < num {
 		return 0, false
 	}
 	return int64(num), true
@@ -85,9 +85,9 @@ func (n *Number) Int() (int64, bool) {
 func (n *Number) Ser() Symbol {
 	if n.ser == nil {
 		if i, ok := n.Int(); ok {
-			n.ser = []byte(strconv.Itoa64(i))
+			n.ser = []byte(strconv.FormatInt(i, 10))
 		} else {
-			n.ser = []byte(strconv.Ftoa64(n.num, 'g', -1))
+			n.ser = []byte(strconv.FormatFloat(n.num, 'g', -1, 64))
 		}
 	}
 	return BytesToSym(n.ser)

@@ -106,7 +106,7 @@ func Mod(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 	}
 	n := vm.API.NumberOrElse(args.Value).Real()
 	m := vm.API.NumberOrElse(args.Next.Value).Real()
-	return gelo.NewNumber(math.Fmod(n, m))
+	return gelo.NewNumber(math.Mod(n, m))
 }
 
 func Lt(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
@@ -181,7 +181,6 @@ func Gte(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 	return gelo.True
 }
 
-
 func Min(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 	if ac == 0 {
 		gelo.ArgumentError(vm, "min", "number+", args)
@@ -238,7 +237,7 @@ func Abs(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 	}
 	return args.MapOrApply(func(w gelo.Word) gelo.Word {
 		n := vm.API.NumberOrElse(w).Real()
-		return gelo.NewNumber(math.Fabs(n))
+		return gelo.NewNumber(math.Abs(n))
 	})
 }
 

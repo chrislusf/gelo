@@ -1,10 +1,10 @@
 package commands
 
 import (
+	"bytes"
 	"gelo"
 	"gelo/extensions"
 	"math"
-	"bytes"
 	"sort"
 )
 
@@ -206,7 +206,7 @@ func Range(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 	if i == 0 {
 		gelo.RuntimeError(vm, "range step size cannot be 0")
 	}
-	if math.Fabs(b-a) < math.Fabs(i) {
+	if math.Abs(b-a) < math.Abs(i) {
 		n := gelo.NewNumber(0)
 		return gelo.NewList(n)
 	}
@@ -453,7 +453,7 @@ func Sym_diff(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 	list := extensions.ListBuilder()
 	for k, v := range Am {
 		if _, ok := Bm[k]; ok { //in both
-			Bm[k] = v, false //delete
+			delete(Bm, k) //delete
 		} else {
 			list.Push(v)
 		}
