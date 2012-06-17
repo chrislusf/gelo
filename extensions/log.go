@@ -1,7 +1,7 @@
 package extensions
 
 import (
-	"gelo"
+	"code.google.com/p/gelo"
 	"io"
 	"log"
 )

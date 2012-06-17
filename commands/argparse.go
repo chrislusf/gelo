@@ -2,8 +2,8 @@ package commands
 
 import (
 	"bytes"
-	"gelo"
-	"gelo/extensions"
+	"code.google.com/p/gelo"
+	"code.google.com/p/gelo/extensions"
 )
 
 func _args_to_spec(args *gelo.List, ac uint) string {

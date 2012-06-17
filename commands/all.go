@@ -1,6 +1,6 @@
 package commands
 
-import "gelo"
+import "code.google.com/p/gelo"
 
 var All = []map[string]interface{}{
 	LogicCommands, MathCommands, ListCommands, TypePredicates, IOCommands,

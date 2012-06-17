@@ -2,8 +2,8 @@ package commands
 
 import (
 	"bytes"
-	"gelo"
-	"gelo/extensions"
+	"code.google.com/p/gelo"
+	"code.google.com/p/gelo/extensions"
 	"math"
 	"unicode"
 	"unicode/utf8"

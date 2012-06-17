@@ -2,7 +2,7 @@ package extensions
 
 import (
 	"bytes"
-	"gelo"
+	"code.google.com/p/gelo"
 )
 
 type couple []gelo.Port

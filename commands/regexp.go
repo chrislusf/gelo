@@ -1,8 +1,8 @@
 package commands
 
 import (
-	"gelo"
-	"gelo/extensions"
+	"code.google.com/p/gelo"
+	"code.google.com/p/gelo/extensions"
 	"regexp"
 )
 

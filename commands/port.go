@@ -1,6 +1,6 @@
 package commands
 
-import "gelo"
+import "code.google.com/p/gelo"
 
 func ChanCon(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 	if ac != 0 {

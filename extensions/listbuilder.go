@@ -1,6 +1,6 @@
 package extensions
 
-import "gelo"
+import "code.google.com/p/gelo"
 
 //This is not intended to be used directly and is only exposed so that it can
 //be stored in other types

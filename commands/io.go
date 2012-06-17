@@ -1,6 +1,6 @@
 package commands
 
-import "gelo"
+import "code.google.com/p/gelo"
 
 func Puts(vm *gelo.VM, args *gelo.List, _ uint) gelo.Word {
 	if args == nil {

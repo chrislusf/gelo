@@ -1,6 +1,6 @@
 package commands
 
-import "gelo"
+import "code.google.com/p/gelo"
 
 func Halt(vm *gelo.VM, args *gelo.List, _ uint) (_ gelo.Word) {
 	vm.API.Halt(args)
