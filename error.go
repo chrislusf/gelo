@@ -101,8 +101,7 @@ func (e _error) From() uint32 {
 	return e.from
 }
 
-func (e _error) String() string {
-
+func (e _error) Error() string {
 	return e.msg
 }
 
@@ -116,7 +115,7 @@ func (e _error) Message() string {
 func (self *ErrSyntax) _tag() {}
 
 func (self *ErrSyntax) Ser() Symbol {
-	return Convert("Syntax error: " + self.String()).(Symbol)
+	return Convert("Syntax error: " + self.Error()).(Symbol)
 }
 
 func (self *ErrSyntax) Equals(w Word) bool {
@@ -144,7 +143,7 @@ func (self *ErrSyntax) Type() Symbol {
 func (self *ErrRuntime) _tag() {}
 
 func (self *ErrRuntime) Ser() Symbol {
-	return StrToSym("Runtime error: " + self.String())
+	return StrToSym("Runtime error: " + self.Error())
 }
 
 func (self *ErrRuntime) Equals(w Word) bool {

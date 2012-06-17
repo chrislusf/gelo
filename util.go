@@ -210,7 +210,7 @@ func Convert(item interface{}) Word {
 			word = interns(t)
 		case []byte:
 			word = intern(t)
-		case []int:
+		case []rune:
 			word = interns(string(t))
 		case []string:
 			if len(t) == 0 {

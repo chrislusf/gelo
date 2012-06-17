@@ -3,8 +3,8 @@ package main
 import (
 	"bufio"
 	"bytes"
-	"container/vector"
 	"flag"
+	"fmt"
 	"gelo"
 	"gelo/commands"
 	"gelo/extensions"
@@ -16,15 +16,15 @@ import (
 
 //globals and helper functions
 
-var history vector.StringVector
+var history []string
 var to_exit, metainvoke bool
 var stdin = bufio.NewReader(os.Stdin)
 var no_prelude = flag.Bool("no-prelude", false, "do not load prelude.gel")
 
 func check(failmsg string, e error) {
 	if e != nil {
-		println(failmsg)
-		println(e.Error())
+		fmt.Println(failmsg)
+		fmt.Println(e.Error())
 		os.Exit(1)
 	}
 }
@@ -84,8 +84,8 @@ func load(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 			llines.Read(buffer)
 		}
 	}
-	for _, line := range *llines.lines {
-		history.Push(line)
+	for _, line := range llines.lines {
+		history = append(history, line)
 	}
 	return gelo.Null
 }
@@ -103,7 +103,7 @@ func save(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 	}
 	for _, line := range history {
 		if _, err := file.WriteString(line); err != nil {
-			println("Error writing file\n" + err.Error())
+			fmt.Println("Error writing file\n" + err.Error())
 			return gelo.Null
 		}
 	}
@@ -114,7 +114,7 @@ func clear(_ *gelo.VM, _ *gelo.List, ac uint) gelo.Word {
 	if ac != 0 {
 		return metahelp("clear")
 	}
-	history.Resize(0, 0)
+	history = history[0:]
 	return gelo.Null
 }
 
@@ -122,16 +122,15 @@ func rewind(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 	if ac > 1 {
 		return metahelp("rewind")
 	} else if ac == 0 {
-		if history.Len() > 0 {
-			history.Pop()
+		if len(history) > 0 {
+			history = history[:len(history)-1]
 		}
 	}
 	n := _valid_idx(vm, "rewind", args.Value)
 	if n == 0 {
 		_invalid_idx(vm, "rewind", gelo.Null)
 	}
-	length := history.Len()
-	history.Cut(length-n, length)
+	history = history[:len(history) - n]
 	return gelo.Null
 }
 
@@ -153,9 +152,8 @@ func show_history(_ *gelo.VM, _ *gelo.List, ac uint) gelo.Word {
 	if ac != 0 {
 		return metahelp("history")
 	}
-	length := history.Len()
-	for i := 0; i < length; i++ {
-		println(i, "->", _foreshorten(history.At(i)))
+	for i, line := range history {
+		fmt.Println(i, "->", _foreshorten(line))
 	}
 	return gelo.Null
 }
@@ -169,11 +167,9 @@ func search(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 		return gelo.StrToSym(
 			"Regex couldn't compile: " + err.Error() + "\n" + dollar_map["search"].help)
 	}
-	length := history.Len()
-	for i := 0; i < length; i++ {
-		line := history.At(i)
+	for i, line := range history {
 		if re.MatchString(line) {
-			println(i, "->", _foreshorten(line))
+			fmt.Println(i, "->", _foreshorten(line))
 		}
 	}
 	return gelo.Null
@@ -196,7 +192,7 @@ func _valid_idx(vm *gelo.VM, name string, w gelo.Word) int {
 		_invalid_idx(vm, name, n)
 	}
 	i := int(i64)
-	if i < 0 || i >= history.Len() {
+	if i < 0 || i >= len(history) {
 		_invalid_idx(vm, name, n)
 	}
 	return i
@@ -207,14 +203,14 @@ var _slice = extensions.MakeArgParser("i ['to j]?")
 func _make_slice(vm *gelo.VM, name string, args *gelo.List) (i, j int) {
 	//XXX ugly hack because 'all|[i ['to j]?] isn't working and I am terrible
 	if args.Len() == 1 && args.Value.Ser().String() == "all" {
-		return 0, history.Len()
+		return 0, len(history)
 	}
 	Args, ok := _slice(args)
 	if !ok {
 		gelo.RuntimeError(vm, "invalid arguments\n"+dollar_map[name].help)
 	}
 	/*if _, all := Args["all"]; all {
-	    return 0, history.Len()
+	    return 0, len(history)
 	}*/
 	i = _valid_idx(vm, name, Args["i"])
 	j = i
@@ -233,27 +229,31 @@ func replay(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 	if ac > 1 {
 		return metahelp("replay")
 	}
-	var lines *vector.StringVector
+	var lines []string
 	if ac == 0 {
-		lines.Push(history.Last())
+		ln := len(history)
+		lines = history[ln-1:ln]
 	} else {
-		lines = history.Slice(_make_slice(vm, "replay", args))
+		i, j := _make_slice(vm, "replay", args)
+		lines = history[i:j]
 	}
 	metainvoke = false
 	defer func() { metainvoke = true }()
-	for _, line := range *lines {
+	for _, line := range lines {
 		play(vm, line)
 	}
 	return gelo.Null
 }
 
 func cut(vm *gelo.VM, args *gelo.List, _ uint) gelo.Word {
-	history.Cut(_make_slice(vm, "cut", args))
+	i, j := _make_slice(vm, "cut", args)
+	history = append(history[:i], history[j:]...)
 	return gelo.Null
 }
 
 func see(vm *gelo.VM, args *gelo.List, _ uint) gelo.Word {
-	for line := range *history.Slice(_make_slice(vm, "see", args)) {
+	i, j := _make_slice(vm, "see", args)
+	for line := range history[i:j] {
 		print(line)
 	}
 	return gelo.Null
@@ -313,7 +313,7 @@ func trace(vm *gelo.VM, args *gelo.List, _ uint) gelo.Word {
 }
 
 func metahelp(name string) gelo.Word {
-	println(dollar_map[name].help)
+	fmt.Println(dollar_map[name].help)
 	return gelo.Null
 }
 
@@ -324,10 +324,10 @@ func help(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 	}
 	c, ok := dollar_map[name]
 	if !ok {
-		println("Unknown command: " + name)
+		fmt.Println("Unknown command: " + name)
 		c = dollar_map["help"]
 	}
-	println(c.help)
+	fmt.Println(c.help)
 	return gelo.Null
 }
 
@@ -394,11 +394,11 @@ func init() {
 		trace,
 	}
 
-	var acc vector.Vector
+	var acc []string
 	for k, _ := range dollar_map {
-		acc.Push("\t" + k)
+		acc = append(acc, "\t" + k)
 	}
-	acc.Push("\tlist")
+	acc = append(acc, "\tlist")
 
 	dollar_map["list"] = command{
 		"list\n\tList all interpreter commands",
@@ -406,9 +406,9 @@ func init() {
 			if ac != 0 {
 				metahelp("list")
 			}
-			println("$$ responds to the following commands:")
+			fmt.Println("$$ responds to the following commands:")
 			for _, v := range acc {
-				println(v.(string))
+				fmt.Println(v)
 			}
 			return gelo.Null
 		},
@@ -419,13 +419,13 @@ func Dollar(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 	var cmd command
 	var there bool
 	if ac == 0 {
-		println("No command specified")
+		fmt.Println("No command specified")
 		cmd = dollar_map["help"]
 		args = nil
 	} else {
 		name := args.Value.Ser().String()
 		if cmd, there = dollar_map[name]; !there {
-			println("Unknown command:", name)
+			fmt.Println("Unknown command:", name)
 			cmd = dollar_map["help"]
 		}
 		args = args.Next
@@ -437,7 +437,7 @@ func Dollar(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 
 type Readline struct {
 	buffer                          *bytes.Buffer
-	lines                           *vector.StringVector
+	lines                           []string
 	literal, escaped, star, comment bool
 	clause, quote, first            int
 }
@@ -450,7 +450,6 @@ func NewReadline() *Readline {
 
 func (r *Readline) Reset() {
 	r.buffer = new(bytes.Buffer)
-	r.lines = new(vector.StringVector)
 	r.first = -1
 }
 
@@ -524,7 +523,7 @@ func (r *Readline) Read(p []byte) (n int, _ error) {
 		r.buffer.WriteByte(c)
 		if !r.escaped && (c == '\n' || c == ';') && r.IsComplete() {
 			if !(c == '\n' && r.first == i) { //ignore blank lines
-				r.lines.Push(r.buffer.String())
+				r.lines = append(r.lines, r.buffer.String())
 			}
 			r.buffer.Reset()
 			r.first = -1
@@ -539,15 +538,15 @@ func play(vm *gelo.VM, line string) {
 	if ret, err := vm.Run(strings.NewReader(line), nil); err == nil {
 		//don't bother showing ""
 		if r := ret.Ser().String(); len(r) != 0 {
-			println("=> ", ret.Ser().String())
+			fmt.Println("=> ", ret.Ser().String())
 		}
 
 		if !metainvoke {
 			//execution was succesful so save in history
-			history.Push(line)
+			history = append(history, line)
 		}
 	} else {
-		println("Failed with:", err.Error())
+		fmt.Println("Failed with:", err.Error())
 	}
 	metainvoke = false
 }
@@ -594,7 +593,7 @@ func main() {
 				break
 			}
 		}
-		for _, lline := range *llines.lines {
+		for _, lline := range llines.lines {
 			play(vm, lline)
 		}
 		//there's a semilegitimate reason we check this twice instead of
@@ -607,5 +606,5 @@ func main() {
 		}
 		llines.Reset()
 	}
-	println()
+	fmt.Println()
 }

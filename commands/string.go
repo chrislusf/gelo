@@ -133,7 +133,7 @@ func FromRunes(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 		if !ok || i < 0 || i > math.MaxInt32 {
 			gelo.TypeMismatch(vm, "rune", "number")
 		}
-		length := utf8.EncodeRune(bucket, int(i))
+		length := utf8.EncodeRune(bucket, rune(i))
 		buf.Write(bucket[:length])
 	}
 	return gelo.BytesToSym(buf.Bytes())
@@ -151,7 +151,7 @@ func ToUpper(_ *gelo.VM, args *gelo.List, _ uint) gelo.Word {
 	})
 }
 
-func _stripper_gen(f func([]byte, func(int) bool) []byte) func(gelo.Word) gelo.Word {
+func _stripper_gen(f func([]byte, func(rune) bool) []byte) func(gelo.Word) gelo.Word {
 	return func(w gelo.Word) gelo.Word {
 		return gelo.BytesToSym(f(w.Ser().Bytes(), unicode.IsSpace))
 	}

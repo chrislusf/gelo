@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"gelo"
 	"gelo/commands"
 	"gelo/extensions"
@@ -85,8 +86,8 @@ var no_prelude = flag.Bool("no-prelude", false, "do not load prelude.gel")
 
 func check(failmsg string, e error) {
 	if e != nil {
-		println(failmsg)
-		println(e.Error())
+		fmt.Println(failmsg)
+		fmt.Println(e.Error())
 		os.Exit(1)
 	}
 }
@@ -95,7 +96,7 @@ func main() {
 	flag.Parse()
 
 	if flag.NArg() == 0 {
-		println("No input file to process")
+		fmt.Println("No input file to process")
 		os.Exit(1)
 	}
 
@@ -126,7 +127,7 @@ func main() {
 		t := make([]byte, 64)
 		for {
 			n, err := reader.Read(t)
-			println(string(t), "n:", n, "err", err == nil)
+			fmt.Println(string(t), "n:", n, "err", err == nil)
 		}
 	}
 

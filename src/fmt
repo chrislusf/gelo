@@ -1,2 +1,0 @@
-#!/bin/sh
-gofmt -w gelo/{*.go,commands/*.go,extensions/*.go} tools/*.go

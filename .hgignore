@@ -1,6 +1,5 @@
 ~$
-\.8$
-\.a$
+\.[568]$
+\.[ao]$
 src/examples/geli$
 src/examples/gelo$
-src/examples/turtle$

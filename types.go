@@ -11,7 +11,7 @@ type Word interface {
 type Symbol interface {
 	Word
 	Bytes() []byte
-	Runes() []int
+	Runes() []rune
 	String() string
 	interned() bool
 }
@@ -31,8 +31,8 @@ type Port interface {
 
 type Error interface {
 	Word
+	error
 	From() uint32
-	String() string
 	_tag()
 }
 
@@ -68,11 +68,7 @@ func (a Alien) DeepCopy() Word {
 }
 
 func (a Alien) Equals(w Word) bool {
-	oa, ok := w.(Alien)
-	if !ok {
-		return false
-	}
-	return a == oa
+	return false
 }
 
 func (Alien) Type() Symbol {

@@ -51,7 +51,7 @@ func ReCon(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 	spec := vm.API.LiteralOrElse(args.Value)
 	rex, err := regexp.Compile(string(spec))
 	if err != nil {
-		gelo.SyntaxError(vm, err.String())
+		gelo.SyntaxError(vm, err.Error())
 	}
 	return &Regexp{rex}
 }

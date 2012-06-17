@@ -240,7 +240,7 @@ func (vm *VM) ReadBytes(name string) ([]byte, bool) {
 	return s.Ser().Bytes(), true
 }
 
-func (vm *VM) ReadRunes(name string) ([]int, bool) {
+func (vm *VM) ReadRunes(name string) ([]rune, bool) {
 	vm._sanity("read a byte string out")
 	vm.mux.RLock()
 	defer vm.mux.RUnlock()

@@ -12,7 +12,7 @@ func BytesToSym(s []byte) Symbol {
 	return _dSymbol(s)
 }
 
-func RuneToSym(s []int) Symbol {
+func RuneToSym(s []rune) Symbol {
 	return _dSymbol([]byte(string(s)))
 }
 
@@ -64,8 +64,8 @@ func (s _dSymbol) String() string {
 	return string([]byte(s))
 }
 
-func (s _dSymbol) Runes() []int {
-	return []int(string([]byte(s)))
+func (s _dSymbol) Runes() []rune {
+	return []rune(string([]byte(s)))
 }
 
 func (_dSymbol) interned() bool {
@@ -107,8 +107,8 @@ func (s _iSymbol) String() string {
 	return string([]byte(s))
 }
 
-func (s _iSymbol) Runes() []int {
-	return []int(string([]byte(s)))
+func (s _iSymbol) Runes() []rune {
+	return []rune(string([]byte(s)))
 }
 
 func (_iSymbol) interned() bool {
