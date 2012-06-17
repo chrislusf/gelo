@@ -1,8 +1,8 @@
 package extensions
 
 import (
-	"gelo"
 	"bytes"
+	"gelo"
 )
 
 type couple []gelo.Port
@@ -79,7 +79,6 @@ func (c *couple) Close() {
 	(*c)[1].Close()
 	*c = (*c)[:0]
 }
-
 
 func (c *couple) Closed() bool {
 	return len(*c) == 0

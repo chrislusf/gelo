@@ -1,8 +1,8 @@
 package extensions
 
 import (
-	"gelo"
 	"bytes"
+	"gelo"
 )
 
 //BUG(jmf): would not behave well if ith Port is Closed()
@@ -87,7 +87,6 @@ func (t *tee) Close() {
 	}
 	*t = (*t)[:0]
 }
-
 
 func (t *tee) Closed() bool {
 	return len(*t) == 0

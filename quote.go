@@ -138,7 +138,6 @@ func (q *protected_quote) Equals(w Word) bool {
 	return bytes.Equal(q.unprotect().source, oq.unprotect().source)
 }
 
-
 func (q *protected_quote) Copy() Word {
 	return q
 }

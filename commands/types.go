@@ -1,8 +1,8 @@
 package commands
 
 import (
-	"gelo"
 	"bytes"
+	"gelo"
 )
 
 func Type_of(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {

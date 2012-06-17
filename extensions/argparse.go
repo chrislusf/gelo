@@ -1,8 +1,8 @@
 package extensions
 
 import (
-	"gelo"
 	"bytes"
+	"gelo"
 )
 
 type __token byte

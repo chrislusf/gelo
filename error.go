@@ -1,8 +1,8 @@
 package gelo
 
 import (
-	"fmt"
 	"bytes"
+	"fmt"
 )
 
 //hopefully one day we also have name, lineno, etc
@@ -108,7 +108,6 @@ func (e _error) Error() string {
 func (e _error) Message() string {
 	return e.msg
 }
-
 
 //syntax errors
 

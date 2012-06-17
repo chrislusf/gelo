@@ -130,7 +130,7 @@ func rewind(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 	if n == 0 {
 		_invalid_idx(vm, "rewind", gelo.Null)
 	}
-	history = history[:len(history) - n]
+	history = history[:len(history)-n]
 	return gelo.Null
 }
 
@@ -232,7 +232,7 @@ func replay(vm *gelo.VM, args *gelo.List, ac uint) gelo.Word {
 	var lines []string
 	if ac == 0 {
 		ln := len(history)
-		lines = history[ln-1:ln]
+		lines = history[ln-1 : ln]
 	} else {
 		i, j := _make_slice(vm, "replay", args)
 		lines = history[i:j]
@@ -396,7 +396,7 @@ func init() {
 
 	var acc []string
 	for k, _ := range dollar_map {
-		acc = append(acc, "\t" + k)
+		acc = append(acc, "\t"+k)
 	}
 	acc = append(acc, "\tlist")
 

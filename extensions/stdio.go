@@ -1,10 +1,10 @@
 package extensions
 
 import (
-	"bytes"
 	"bufio"
-	"os"
+	"bytes"
 	"gelo"
+	"os"
 )
 
 var (

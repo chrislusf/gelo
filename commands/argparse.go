@@ -1,9 +1,9 @@
 package commands
 
 import (
+	"bytes"
 	"gelo"
 	"gelo/extensions"
-	"bytes"
 )
 
 func _args_to_spec(args *gelo.List, ac uint) string {
