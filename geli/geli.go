@@ -114,7 +114,7 @@ func clear(_ *gelo.VM, _ *gelo.List, ac uint) gelo.Word {
 	if ac != 0 {
 		return metahelp("clear")
 	}
-	history = history[0:]
+	history = history[:0]
 	return gelo.Null
 }
 
@@ -254,7 +254,7 @@ func cut(vm *gelo.VM, args *gelo.List, _ uint) gelo.Word {
 func see(vm *gelo.VM, args *gelo.List, _ uint) gelo.Word {
 	i, j := _make_slice(vm, "see", args)
 	for line := range history[i:j] {
-		print(line)
+		fmt.Print(line)
 	}
 	return gelo.Null
 }
@@ -443,7 +443,7 @@ type Readline struct {
 }
 
 func NewReadline() *Readline {
-	r := new(Readline)
+	r := &Readline{}
 	r.Reset()
 	return r
 }
@@ -451,6 +451,7 @@ func NewReadline() *Readline {
 func (r *Readline) Reset() {
 	r.buffer = new(bytes.Buffer)
 	r.first = -1
+	r.lines = r.lines[:0]
 }
 
 func (r *Readline) IsComplete() bool {
@@ -581,10 +582,10 @@ func main() {
 				break
 			}
 			if first {
-				print(">> ")
+				fmt.Print(">> ")
 				first = false
 			} else {
-				print(".. ")
+				fmt.Print(".. ")
 			}
 			pline, err := stdin.ReadSlice('\n')
 			to_exit = err != nil

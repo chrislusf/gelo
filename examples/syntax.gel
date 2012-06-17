@@ -17,7 +17,7 @@ puts "a   strinnnng   !
 }
 puts testing "$[]"
 {
-    puts $[puts true]
+    puts $[id puts]
 }
 puts testing "@[]"
 set! a {
