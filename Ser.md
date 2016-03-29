@@ -1,0 +1,1 @@
+All gelo values are effectively dually typed. Whatever their primary type is, they can always be serialized to a symbol. Ideally, the serialization should be unique, at least within the domain of the primary type, and should contain enough information to recreate the original value in that type.

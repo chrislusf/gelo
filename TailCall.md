@@ -1,0 +1,3 @@
+Lines in a quote piggyback on the Go stack, but the last line in every quote that rewrites to a [quote or alien](GeloTypes.md) is a TailCall. Since there are no statements or special forms--even `if` is a command--this is much simpler than in most other languages. A quote is, conceptually, rewritten to the result of its last line so there is no need to save a stack for a relation that doesn't exist in the language. See RewritingMetaphor.
+
+When WritingAlienCommands that return invokables, use the [TailInvoke](API#The_TailInvoke_*_subfamily.md) family to create commands that TailCall.
